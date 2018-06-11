@@ -76,20 +76,6 @@ unsigned int splx::BSpline::findSpan(double u) const {
 splx::Vec splx::BSpline::eval(double u) {
   assert(u >= m_a && u <= m_b);
 
-  int js = findSpan(u);
-
-  vector<vector<double> > N(m_controlPoints.size());
-  for(int i = 0; i < m_controlPoints.size(); i++) {
-    N[i].resize(m_degree+1);
-    N[i][0] = (u >= m_knotVector[i] && u < m_knotVector[i+1] ? 1 : 0);
-  }
-
-  for(int p = 1; p <= m_degree; p++) {
-    for(int j = js - m_degree; j <= js; j++) {
-      N[j][p] = 
-    }
-  }
-
 }
 
 splx::Vec splx::BSpline::eval(double u, int n) {

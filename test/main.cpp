@@ -1,9 +1,9 @@
-#include "bspline.h"
 #include <qpOASES.hpp>
 #include <eigen3/Eigen/Dense>
 #include <vector>
 #include <random>
 #include <iostream>
+#include "bspline.h"
 
 int main() {
   std::default_random_engine generator;

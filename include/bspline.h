@@ -1,14 +1,12 @@
-#ifndef BSPLINE_H
-#define BSPLINE_H
+#ifndef SPLX_BSPLINE_H
+#define SPLX_BSPLINE_H
 #include <eigen3/Eigen/Dense>
 #include <vector>
+#include "spline.h"
 
 namespace splx {
 
-
-  typedef Eigen::Matrix<double, Eigen::Dynamic, 1> Vec;
-
-  class BSpline {
+  class BSpline: public Spline {
   public:
 
     /**
