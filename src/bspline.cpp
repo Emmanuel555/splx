@@ -74,11 +74,7 @@ unsigned int splx::BSpline::findSpan(double u) const {
   }
   return mid;
 }
-/*
-splx::Vec splx::BSpline::eval(double u) {
-  assert(u >= m_a && u <= m_b);
-}
-*/
+
 splx::Vec splx::BSpline::eval(double u) {
   assert(u >= m_a && u <= m_b);
 
@@ -99,17 +95,9 @@ splx::Vec splx::BSpline::eval(double u) {
     int i = p & 0x1;
     int pi = (p - 1) & 0x1;
     for(unsigned int j = je - m_degree; j <= je + m_degree - p; j++) {
-      if(m_knotVector[j+p] == m_knotVector[j] && m_knotVector[j+p+1] == m_knotVector[j+1]) {
-        N[i][j] = 0;
-      } else if(m_knotVector[j+p] == m_knotVector[j]) {
-        N[i][j] = N[pi][j+1] * (m_knotVector[j+p+1] - u) / (m_knotVector[j+p+1] - m_knotVector[j+1]);
-      } else if(m_knotVector[j+p+1] == m_knotVector[j+1]) {
-        N[i][j] = N[pi][j] * (u - m_knotVector[j]) / (m_knotVector[j+p] - m_knotVector[j]);
-      } else {
-        N[i][j] =
-          N[pi][j] * (u - m_knotVector[j]) / (m_knotVector[j+p] - m_knotVector[j])
-        + N[pi][j+1] * (m_knotVector[j+p+1] - u) / (m_knotVector[j+p+1] - m_knotVector[j+1]);
-      }
+      N[i][j] =
+        (N[pi][j] == 0.0 ? 0.0 : N[pi][j] * (u - m_knotVector[j]) / (m_knotVector[j+p] - m_knotVector[j]))
+      + (N[pi][j+1] == 0.0 ? 0.0 : N[pi][j+1] * (m_knotVector[j+p+1] - u) / (m_knotVector[j+p+1] - m_knotVector[j+1]));
     }
   }
 
