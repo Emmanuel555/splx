@@ -75,47 +75,71 @@ unsigned int splx::BSpline::findSpan(double u) const {
   return mid;
 }
 
-
-
-splx::Vec splx::BSpline::eval(double u) {
-  assert(u >= m_a && u <= m_b);
-
-  unsigned int je = findSpan(u);
+std::vector<double> splx::BSpline::evalBasisFuncs(double u, unsigned int deg, unsigned int k, unsigned int from, unsigned int to) const {
   std::vector<std::vector<double> > N(2);
-  N[0].resize(m_knotVector.size() - 1);
-  N[1].resize(m_knotVector.size() - 1);
+  N[0].resize(to + deg - from + 1, 0.0);
+  N[1].resize(to + deg - from + 1, 0.0);
 
-  for(unsigned int j = je - m_degree; j <= je + m_degree; j++) {
-    N[0][j] = (u >= m_knotVector[j] && u < m_knotVector[j+1] ? 1 : 0);
+  if(from > to) {
+    return std::vector<double>();
   }
 
-  if(u == m_b) { // special case
-    N[0][m_controlPoints.size()-1] = 1.0;
+  if(k > deg) {
+    N[0].resize(to - from + 1);
+    return N[0];
   }
 
-  for(unsigned int p = 1; p <= m_degree; p++) {
-    int i = p & 0x1;
-    int pi = (p - 1) & 0x1;
-    for(unsigned int j = je - m_degree; j <= je + m_degree - p; j++) {
-      N[i][j] =
-        (N[pi][j] == 0.0 ? 0.0 : N[pi][j] * (u - m_knotVector[j]) / (m_knotVector[j+p] - m_knotVector[j]))
-      + (N[pi][j+1] == 0.0 ? 0.0 : N[pi][j+1] * (m_knotVector[j+p+1] - u) / (m_knotVector[j+p+1] - m_knotVector[j+1]));
+  for(unsigned int j = from; j <= to + deg; j++) {
+    N[0][j - from] = (u >= m_knotVector[j] && u < m_knotVector[j+1] ? 1 : 0);
+    if(u == m_b && j == m_controlPoints.size() - 1) {
+      N[0][j - from] = 1.0;
     }
   }
 
-  Vec result(m_dimension);
-  for(unsigned int i = 0; i < m_dimension; i++)
-    result(i) = 0;
+  for(unsigned int p = 1; p <= deg - k; p++) {
+    int i = p & 0x1;
+    int pi = (p - 1) & 0x1;
+    for(unsigned int j = from; j <= to + deg - p; j++) {
+      N[i][j-from] =
+        (N[pi][j-from] == 0.0 ? 0.0 : N[pi][j-from] * (u - m_knotVector[j]) / (m_knotVector[j+p] - m_knotVector[j]))
+      + (N[pi][j-from+1] == 0.0 ? 0.0 : N[pi][j-from+1] * (m_knotVector[j+p+1] - u) / (m_knotVector[j+p+1] - m_knotVector[j+1]));
+    }
+  }
 
-  std::vector<double>& B = N[m_degree & 0x1];
+  for(unsigned int  p = deg - k + 1; p <= deg; p++) {
+    int i = p & 0x1;
+    int pi = (p - 1) & 0x1;
+    for(unsigned int j = from; j <= to  + deg - p; j++) {
+      N[i][j-from] = p * ((N[pi][j-from] == 0.0 ? 0.0 : N[pi][j-from] / (m_knotVector[j+p] - m_knotVector[j]))
+                   - (N[pi][j-from+1] == 0.0 ? 0.0 : N[pi][j-from+1] / (m_knotVector[j+p+1] - m_knotVector[j+1])));
+    }
+  }
+
+  N[deg & 0x1].resize(to - from + 1);
+  return N[deg & 0x1];
+}
+
+
+splx::Vec splx::BSpline::eval(double u, unsigned int k) const {
+  assert(u >= m_a && u <= m_b);
+  Vec result(m_dimension);
+  for(unsigned int i = 0; i < m_dimension; i++) {
+    result(i) = 0.0;
+  }
+
+  unsigned int je = findSpan(u);
+
+  std::vector<double> N = evalBasisFuncs(u, m_degree, k, je - m_degree, je);
+
   for(unsigned int j = je - m_degree; j <= je; j++) {
-    result += m_controlPoints[j] * B[j];
+    result += m_controlPoints[j] * N[j - je + m_degree];
   }
 
   return result;
 }
-
-splx::Vec splx::BSpline::eval(double u, unsigned int k) {
+/*
+splx::Vec splx::BSpline::eval(double u, unsigned int k) const {
+  // eq 2.9
   assert(u >= m_a && u <= m_b);
 
   Vec result(m_dimension);
@@ -127,10 +151,12 @@ splx::Vec splx::BSpline::eval(double u, unsigned int k) {
   }
 
   if(k == 0) {
-    return eval(u);
+    //return eval(u);
   }
 
-  int je = findSpan(u);
+
+
+  unsigned int je = findSpan(u);
 
   std::vector<std::vector<double> > N(2);
   N[0].resize(m_knotVector.size() - 1);
@@ -154,23 +180,19 @@ splx::Vec splx::BSpline::eval(double u, unsigned int k) {
     }
   }
 
-  std::vector<double>& Q = N[(m_degree - k) & 0x1];
-
-  std::vector<double> B(m_degree + 1);
-
-  for(unsigned int i = 0; i < m_degree + 1; i++) {
-    B[i] = 0;
-    unsigned int n = je - m_degree + i;
-
-    for(unsigned int j = 0; j <= k; j++) {
-      //TODO
+  for(unsigned int  p = m_degree - k + 1; p <= m_degree; p++) {
+    int i = p & 0x1;
+    int pi = (p - 1) & 0x1;
+    for(unsigned int j = je - m_degree; j <= je  + m_degree - p; j++) {
+      N[i][j] = p * ((N[pi][j] == 0.0 ? 0.0 : N[pi][j] / (m_knotVector[j+p] - m_knotVector[j]))
+                   - (N[pi][j+1] == 0.0 ? 0.0 : N[pi][j+1] / (m_knotVector[j+p+1] - m_knotVector[j+1])));
     }
-
-    B[i] *= perm(m_degree, k);
   }
 
-
-
-
-  return eval(u);
+  std::vector<double>& B = N[m_degree & 0x1];
+  for(unsigned int j = je - m_degree; j <= je; j++) {
+    result += m_controlPoints[j] * B[j];
+  }
+  return result;
 }
+*/

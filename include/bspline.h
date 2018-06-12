@@ -30,18 +30,11 @@ namespace splx {
 
 
     /**
-      * Evaluates spline at u
-      *
-      * @fails if u is not in [m_a, m_b]
-    */
-    Vec eval(double u);
-
-    /**
       * Evaluates the k^{th} derivative of the spline at u \in [0,1]
       *
       * @fails if u is not in [m_a, m_b]
     */
-    Vec eval(double u, unsigned int k);
+    Vec eval(double u, unsigned int k) const;
 
     /**
       DBG FUNCTIONS
@@ -75,6 +68,11 @@ namespace splx {
       * @fails if u not in [0,1]
     */
     unsigned int findSpan(double u) const;
+
+    /**
+     * Evaluate k^th derivative of basis functions [N_{from,deg}, ..., N_{to,deg}] at u.
+    */
+    std::vector<double> evalBasisFuncs(double u, unsigned int deg, unsigned int k, unsigned int from, unsigned int to) const;
 
   };
 

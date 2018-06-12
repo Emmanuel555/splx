@@ -13,13 +13,9 @@ namespace splx {
     unsigned int perm(unsigned int n, unsigned int k) const;
   public:
     /**
-     * Evaluate spline at u
-    */
-    virtual Vec eval(double u) = 0;
-    /**
      * Evaluate k^{th} derivative of the spline at u
     */
-    virtual Vec eval(double u, unsigned int k) = 0;
+    virtual Vec eval(double u, unsigned int k) const = 0;
   };
 
 

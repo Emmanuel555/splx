@@ -15,6 +15,11 @@ print(l)
 i = 0
 x = []
 y = []
+
+xv = []
+yv = []
+dvx = []
+dvy = []
 while(i<len(l)):
     type = l[i]
     xx = float(l[i+1].strip())
@@ -22,8 +27,16 @@ while(i<len(l)):
     i+=3
     if(type == 'c'):
         plt.plot([xx], [yy], marker='o')
-    else:
+    elif(type == 'v'):
+        xv.append(x[-1])
+        yv.append(y[-1])
+        dvx.append(xx)
+        dvy.append(yy)
+    elif(type == 'd'):
         x.append(xx)
         y.append(yy)
+    else:
+        raise "no"
 plt.plot(x, y)
+plt.quiver(xv, yv, dvx, dvy, width = 0.0025, angles = 'xy')
 plt.show()
