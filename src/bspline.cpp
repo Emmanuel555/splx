@@ -56,7 +56,7 @@ void splx::BSpline::printKnotVectorNumbered() const {
 unsigned int splx::BSpline::findSpan(double u) const {
   assert(u >= m_a && u <= m_b);
 
-  if(u == m_b) {
+  if(u == m_b) { // special cases
     return m_controlPoints.size() - 1;
   }
 
@@ -74,8 +74,11 @@ unsigned int splx::BSpline::findSpan(double u) const {
   }
   return mid;
 }
-
-
+/*
+splx::Vec splx::BSpline::eval(double u) {
+  assert(u >= m_a && u <= m_b);
+}
+*/
 splx::Vec splx::BSpline::eval(double u) {
   assert(u >= m_a && u <= m_b);
 
@@ -85,7 +88,11 @@ splx::Vec splx::BSpline::eval(double u) {
   N[1].resize(m_knotVector.size() - 1);
 
   for(unsigned int j = je - m_degree; j <= je + m_degree; j++) {
-    N[0][j] = (u >= m_knotVector[j] && u <= m_knotVector[j+1] ? 1 : 0);
+    N[0][j] = (u >= m_knotVector[j] && u < m_knotVector[j+1] ? 1 : 0);
+  }
+
+  if(u == m_b) { // special case
+    N[0][m_controlPoints.size()-1] = 1.0;
   }
 
   for(unsigned int p = 1; p <= m_degree; p++) {
@@ -95,7 +102,7 @@ splx::Vec splx::BSpline::eval(double u) {
       if(m_knotVector[j+p] == m_knotVector[j] && m_knotVector[j+p+1] == m_knotVector[j+1]) {
         N[i][j] = 0;
       } else if(m_knotVector[j+p] == m_knotVector[j]) {
-        N[i][j] = N[pi][j+1] * (m_knotVector[j+1] - u) / (m_knotVector[j+p+1] - m_knotVector[j+1]);
+        N[i][j] = N[pi][j+1] * (m_knotVector[j+p+1] - u) / (m_knotVector[j+p+1] - m_knotVector[j+1]);
       } else if(m_knotVector[j+p+1] == m_knotVector[j+1]) {
         N[i][j] = N[pi][j] * (u - m_knotVector[j]) / (m_knotVector[j+p] - m_knotVector[j]);
       } else {
