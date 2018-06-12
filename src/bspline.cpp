@@ -75,6 +75,8 @@ unsigned int splx::BSpline::findSpan(double u) const {
   return mid;
 }
 
+
+
 splx::Vec splx::BSpline::eval(double u) {
   assert(u >= m_a && u <= m_b);
 
@@ -105,19 +107,69 @@ splx::Vec splx::BSpline::eval(double u) {
   for(unsigned int i = 0; i < m_dimension; i++)
     result(i) = 0;
 
-  int i = m_degree & 0x1;
+  std::vector<double>& B = N[m_degree & 0x1];
   for(unsigned int j = je - m_degree; j <= je; j++) {
-    result += m_controlPoints[j] * N[i][j];
+    result += m_controlPoints[j] * B[j];
   }
 
   return result;
 }
 
-splx::Vec splx::BSpline::eval(double u, int n) {
+splx::Vec splx::BSpline::eval(double u, unsigned int k) {
   assert(u >= m_a && u <= m_b);
-  if(n == 0) {
+
+  Vec result(m_dimension);
+  for(unsigned int i = 0; i < m_dimension; i++)
+    result(i) = 0.0;
+
+  if(k > m_degree) {
+    return result;
+  }
+
+  if(k == 0) {
     return eval(u);
   }
+
+  int je = findSpan(u);
+
+  std::vector<std::vector<double> > N(2);
+  N[0].resize(m_knotVector.size() - 1);
+  N[1].resize(m_knotVector.size() - 1);
+
+  for(unsigned int j = je - m_degree; j <= je + m_degree; j++) {
+    N[0][j] = (u >= m_knotVector[j] && u < m_knotVector[j+1] ? 1 : 0);
+  }
+
+  if(u == m_b) { // special case
+    N[0][m_controlPoints.size()-1] = 1.0;
+  }
+
+  for(unsigned int p = 1; p <= m_degree - k; p++) {
+    int i = p & 0x1;
+    int pi = (p - 1) & 0x1;
+    for(unsigned int j = je - m_degree; j <= je + m_degree - p; j++) {
+      N[i][j] =
+        (N[pi][j] == 0.0 ? 0.0 : N[pi][j] * (u - m_knotVector[j]) / (m_knotVector[j+p] - m_knotVector[j]))
+      + (N[pi][j+1] == 0.0 ? 0.0 : N[pi][j+1] * (m_knotVector[j+p+1] - u) / (m_knotVector[j+p+1] - m_knotVector[j+1]));
+    }
+  }
+
+  std::vector<double>& Q = N[(m_degree - k) & 0x1];
+
+  std::vector<double> B(m_degree + 1);
+
+  for(unsigned int i = 0; i < m_degree + 1; i++) {
+    B[i] = 0;
+    unsigned int n = je - m_degree + i;
+
+    for(unsigned int j = 0; j <= k; j++) {
+      //TODO
+    }
+
+    B[i] *= perm(m_degree, k);
+  }
+
+
 
 
   return eval(u);

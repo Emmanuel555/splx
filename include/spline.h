@@ -7,15 +7,19 @@ namespace splx {
   typedef Eigen::Matrix<double, Eigen::Dynamic, 1> Vec;
 
   class Spline {
+  protected:
+    unsigned int fac(unsigned int n) const;
+    unsigned int comb(unsigned int n, unsigned int k) const;
+    unsigned int perm(unsigned int n, unsigned int k) const;
   public:
     /**
      * Evaluate spline at u
     */
     virtual Vec eval(double u) = 0;
     /**
-     * Evaluate n^{th} derivative of the spline at u
+     * Evaluate k^{th} derivative of the spline at u
     */
-    virtual Vec eval(double u, int n) = 0;
+    virtual Vec eval(double u, unsigned int k) = 0;
   };
 
 

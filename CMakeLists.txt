@@ -12,7 +12,11 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
 )
 
-add_library(splx src/bspline.cpp)
+add_library(
+splx
+src/spline.cpp
+src/bspline.cpp
+)
 
 add_executable(main test/main.cpp)
 target_link_libraries(main splx)

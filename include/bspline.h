@@ -37,11 +37,11 @@ namespace splx {
     Vec eval(double u);
 
     /**
-      * Evaluates the n^{th} derivative of the spline at u \in [0,1]
+      * Evaluates the k^{th} derivative of the spline at u \in [0,1]
       *
       * @fails if u is not in [m_a, m_b]
     */
-    Vec eval(double u, int n);
+    Vec eval(double u, unsigned int k);
 
     /**
       DBG FUNCTIONS
@@ -75,6 +75,7 @@ namespace splx {
       * @fails if u not in [0,1]
     */
     unsigned int findSpan(double u) const;
+
   };
 
 }
