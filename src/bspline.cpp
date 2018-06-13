@@ -76,18 +76,18 @@ unsigned int splx::BSpline::findSpan(double u) const {
 }
 
 std::vector<double> splx::BSpline::evalBasisFuncs(double u, unsigned int deg, unsigned int k, unsigned int from, unsigned int to) const {
-  std::vector<std::vector<double> > N(2);
-  N[0].resize(to + deg - from + 1, 0.0);
-  N[1].resize(to + deg - from + 1, 0.0);
-
   if(from > to) {
     return std::vector<double>();
   }
 
   if(k > deg) {
-    N[0].resize(to - from + 1);
-    return N[0];
+    return std::vector<double>(to - from + 1, 0.0);
   }
+
+  std::vector<std::vector<double> > N(2);
+  N[0].resize(to + deg - from + 1, 0.0);
+  N[1].resize(to + deg - from + 1, 0.0);
+
 
   for(unsigned int j = from; j <= to + deg; j++) {
     N[0][j - from] = (u >= m_knotVector[j] && u < m_knotVector[j+1] ? 1 : 0);

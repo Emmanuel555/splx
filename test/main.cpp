@@ -27,7 +27,7 @@ int main() {
     cout << v << endl;
   }
 
-  splx::BSpline bspl(3, 2, 0, 1.0, cpts);
+  splx::BSpline bspl(2, 2, 0, 1.0, cpts);
 
   int i = 0;
 
