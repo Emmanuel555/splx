@@ -36,9 +36,31 @@ namespace splx {
     */
     Vec eval(double u, unsigned int k) const;
 
+
+
+    /**
+     * Return hessian matrix for QP where every element is 0.0.
+     * In all functions that extends this hessian, order of variables is assumed to be
+     * p0x, p1x, p2x, ..., pnx, p0y, p1y, ..., pny, ...
+     *
+     * Notice that this matrix is hessian. Therefore, it a symmetric and
+     * it can be used in QP as 1/2 p'Hp
+    */
+    Matrix getZeroHessian() const;
+
+    /**
+     * Add integral from m_a to m_b of square of norm of k^th derivative of the spline
+     * to the hessian matrix H with scalar lambda
+     *
+     * order of variables is assumed to be
+     * p0x, p1x, p2x, ..., pnx, p0y, p1y, ..., pny, ...
+    */
+    void extendHessianIntegratedSquaredDerivative(Matrix& H, unsigned int k, double lambda) const;
+
     /**
       DBG FUNCTIONS
     */
+    Vec eval_dbg(double u) const;
     void printKnotVector() const;
     void printControlPoints() const;
     void printKnotVectorNumbered() const;
@@ -74,6 +96,14 @@ namespace splx {
     */
     std::vector<double> evalBasisFuncs(double u, unsigned int deg, unsigned int k, unsigned int from, unsigned int to) const;
 
+    /**
+     * Get coefficient matrix of basis functions [N_{from,p}(u) ... N_{to,p}(u)] in interval
+     * [m_knotVector[i], m_knotVector[i+1]) where first row is the coefficients of N_{from, p}
+     * and last row is the coefficients of N_{to, p}
+     *
+     * a0 + a1u + a2u^2 + ... + apu^p
+    */
+    Matrix getBasisCoefficientMatrix(unsigned int from, unsigned int to, unsigned int p, unsigned int i) const;
   };
 
 }

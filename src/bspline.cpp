@@ -6,6 +6,7 @@
 
 using std::cout;
 using std::endl;
+using std::cin;
 
 splx::BSpline::BSpline(unsigned int deg, unsigned int dim, double A, double B)
                       : m_degree(deg), m_dimension(dim), m_a(A), m_b(B) {
@@ -136,4 +137,84 @@ splx::Vec splx::BSpline::eval(double u, unsigned int k) const {
   }
 
   return result;
+}
+
+splx::Matrix splx::BSpline::getZeroHessian() const {
+  unsigned int S = m_controlPoints.size() * m_dimension;
+  Matrix H(S, S);
+  for(unsigned int i = 0; i < S; i++)
+    for(unsigned int j = 0; j < S; j++)
+      H(i, j) = 0.0;
+  return H;
+}
+
+
+void splx::BSpline::extendHessianIntegratedSquaredDerivative(Matrix& H, unsigned int k, double lambda) const {
+  //todo
+  H(k, k) = lambda;
+}
+
+splx::Matrix splx::BSpline::getBasisCoefficientMatrix(unsigned int from, unsigned int to, unsigned int p, unsigned int i) const {
+  Matrix result(to-from+1, p+1);
+  for(unsigned int ix = 0; ix < to-from+1; ix++) {
+    for(unsigned int iy = 0; iy < p+1; iy++) {
+      result(ix, iy) = 0.0;
+    }
+  }
+
+  if(p == 0) {
+    for(unsigned int j = from; j <= to; j++) {
+      result(j-from, 0) = (j == i ? 1.0 : 0.0);
+    }
+  } else {
+    Matrix prevpower = getBasisCoefficientMatrix(from ,to+1, p-1, i);
+
+    for(unsigned int j = from; j<=to; j++) {
+      result(j-from, 0) += (m_knotVector[j+p] == m_knotVector[j] ? 0.0 :
+          (-m_knotVector[j] * prevpower(j-from, 0) / (m_knotVector[j+p] - m_knotVector[j])));
+      result(j-from, 0) += (m_knotVector[j+p+1] == m_knotVector[j+1] ? 0.0 :
+          (m_knotVector[j+p+1] * prevpower(j-from+1, 0) / (m_knotVector[j+p+1] - m_knotVector[j+1])));
+
+      result(j-from, p) += (m_knotVector[j+p] == m_knotVector[j] ? 0.0 :
+          (prevpower(j-from, p-1) / (m_knotVector[j+p] - m_knotVector[j])));
+      result(j-from, p) += (m_knotVector[j+p+1] == m_knotVector[j+1] ? 0.0 :
+          (-prevpower(j-from+1, p-1) / (m_knotVector[j+p+1] - m_knotVector[j+1])));
+      for(unsigned int k = 1; k < p; k++) {
+        result(j-from, k) += (m_knotVector[j+p] == m_knotVector[j] ? 0.0:
+                        (prevpower(j-from, k-1) / (m_knotVector[j+p] - m_knotVector[j])));
+        result(j-from, k) += (m_knotVector[j+p] == m_knotVector[j] ? 0.0:
+                        (-m_knotVector[j] * prevpower(j-from, k) / (m_knotVector[j+p] - m_knotVector[j])));
+        result(j-from, k) += (m_knotVector[j+p+1] == m_knotVector[j+1] ? 0.0:
+                        (-prevpower(j+1-from, k-1) / (m_knotVector[j+p+1] - m_knotVector[j+1])));
+        result(j-from, k) += (m_knotVector[j+p+1] == m_knotVector[j+1] ? 0.0:
+                        (m_knotVector[j+p+1] * prevpower(j+1-from, k) / (m_knotVector[j+p+1] - m_knotVector[j+1])));
+      }
+    }
+  }
+
+  return result;
+}
+
+
+splx::Vec splx::BSpline::eval_dbg(double u) const {
+  unsigned int je = findSpan(u);
+  Matrix mtr = getBasisCoefficientMatrix(je-m_degree, je, m_degree, je);
+
+  Vec uvec(m_degree+1);
+  double uy = 1;
+  for(unsigned int i=0; i<m_degree+1; i++) {
+    uvec(i) = uy;
+    uy *= u;
+  }
+
+  Vec basis = mtr * uvec;
+
+  Vec res(m_dimension);
+  for(unsigned int i=0;i<m_dimension;i++)
+    res(i) = 0.0;
+
+  for(unsigned int i = 0; i<m_degree+1; i++) {
+    res += basis(i) * m_controlPoints[i+je-m_degree];
+  }
+  return res;
 }

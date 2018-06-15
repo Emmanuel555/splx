@@ -35,6 +35,8 @@ while(i<len(l)):
     elif(type == 'd'):
         x.append(xx)
         y.append(yy)
+    elif(type == 'd2'):
+        pass
     else:
         raise "no"
 plt.plot(x, y)
