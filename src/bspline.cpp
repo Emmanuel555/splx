@@ -150,7 +150,27 @@ splx::Matrix splx::BSpline::getZeroHessian() const {
 
 
 void splx::BSpline::extendHessianIntegratedSquaredDerivative(Matrix& H, unsigned int k, double lambda) const {
-  //todo
+  if(k > m_degree)
+    return;
+
+  Matrix D(m_degree+1, m_degree+1); // get k^th derivative coefficients from a0 + a1u + ... a(m_degree)u^m_degree
+  for(unsigned int m = 0; m < m_degree+1; m++) {
+    for(unsigned int n = 0; n < m_degree+1; n++) {
+      D(m, n) = 0.0;
+    }
+    if(m <= m_degree-k) {
+      D(m, m+k) = perm(m+k, k);
+    }
+  }
+
+  for(unsigned int j = m_degree; j < m_controlPoints.size(); j++) {
+    // integrate from m_knotVector[j] to m_knotVector[j+1]
+    Matrix M = getBasisCoefficientMatrix(j - m_degree, j, m_degree, j).transpose();
+    for(unsigned int d = 0; d < m_dimension; d++) {
+
+    }
+  }
+  cout << endl;
   H(k, k) = lambda;
 }
 
