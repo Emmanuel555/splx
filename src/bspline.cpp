@@ -164,16 +164,16 @@ void splx::BSpline::extendHessianIntegratedSquaredDerivative(Matrix& H, unsigned
     }
   }
 
-  Matrix SQI(m_degree+1, m_degree+1); // get the integral of the square of the polynomial.
-  for(unsigned i = 0; i <= m_degree; i++) {
-    for(unsigned int j = 0; j <= m_degree; j++) {
-      SQI(i, j) = 2.0 * (std::pow(m_b, i+j+1) - std::pow(m_a, i+j+1)) / (i+j+1);
-    }
-  }
 
   for(unsigned int j = m_degree; j < m_controlPoints.size(); j++) {
     // integrate from m_knotVector[j] to m_knotVector[j+1]
     Matrix M = getBasisCoefficientMatrix(j - m_degree, j, m_degree, j).transpose();
+    Matrix SQI(m_degree+1, m_degree+1); // get the integral of the square of the polynomial.
+    for(unsigned m = 0; m <= m_degree; m++) {
+      for(unsigned int n = 0; n <= m_degree; n++) {
+        SQI(m, n) = 2.0 * (std::pow(m_knotVector[j+1], m+n+1) - std::pow(m_knotVector[j], m+n+1)) / (m+n+1);
+      }
+    }
     for(unsigned int d = 0; d < m_dimension; d++) {
 
     }
