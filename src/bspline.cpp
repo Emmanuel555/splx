@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <eigen3/Eigen/Dense>
+#include <cmath>
 
 using std::cout;
 using std::endl;
@@ -160,6 +161,13 @@ void splx::BSpline::extendHessianIntegratedSquaredDerivative(Matrix& H, unsigned
     }
     if(m <= m_degree-k) {
       D(m, m+k) = perm(m+k, k);
+    }
+  }
+
+  Matrix SQI(m_degree+1, m_degree+1); // get the integral of the square of the polynomial.
+  for(unsigned i = 0; i <= m_degree; i++) {
+    for(unsigned int j = 0; j <= m_degree; j++) {
+      SQI(i, j) = 2.0 * (std::pow(m_b, i+j+1) - std::pow(m_a, i+j+1)) / (i+j+1);
     }
   }
 
