@@ -49,14 +49,22 @@ namespace splx {
     Matrix getZeroHessian() const;
 
     /**
+     *
+     *
+    */
+    Vec getZeroG() const;
+
+    /**
      * Add integral from m_a to m_b of square of norm of k^th derivative of the spline
      * to the hessian matrix H with scalar lambda
      *
      * order of variables is assumed to be
      * p0x, p1x, p2x, ..., pnx, p0y, p1y, ..., pny, ...
     */
-    void extendHessianIntegratedSquaredDerivative(Matrix& H, unsigned int k, double lambda) const;
+    void extendQPIntegratedSquaredDerivative(Matrix& H, unsigned int k, double lambda) const;
 
+
+    void extendQPPositionAtU(Matrix& H, Matrix& g, double u, Vec& pos, double theta) const;
     /**
       DBG FUNCTIONS
     */

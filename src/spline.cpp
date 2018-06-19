@@ -3,7 +3,7 @@
 
 unsigned int splx::Spline::fac(unsigned int n) const {
   unsigned int res = 1;
-  for(int i = 2; i<=n; i++)
+  for(unsigned int i = 2; i<=n; i++)
     res *= i;
   return res;
 }
@@ -13,7 +13,7 @@ unsigned int splx::Spline::comb(unsigned int n, unsigned int k) const {
   k = std::min(k, n-k);
   int top = 1;
   int bottom = 1;
-  for(int i=0; i<k; i++) {
+  for(unsigned int i=0; i<k; i++) {
     bottom *= (i+1);
     top *= (n-i);
   }
@@ -28,7 +28,7 @@ unsigned int splx::Spline::perm(unsigned int n, unsigned int k) const {
 
 splx::Matrix splx::Spline::convertHessianToUpperTriangular(const splx::Matrix& H) const {
   unsigned int S = H.rows();
-  splx::Matrix U = H;
+  splx::Matrix U(H);
   for(unsigned int i = 0; i < S; i++) {
     U(i, i) /= 2.0;
     for(unsigned int j = 0; j < i; j++) {
@@ -41,9 +41,9 @@ splx::Matrix splx::Spline::convertHessianToUpperTriangular(const splx::Matrix& H
 
 void splx::Spline::convertHessianToUpperTriangular(splx::Matrix& H) const {
   unsigned int S = H.rows();
-  for(int i = 0; i < S; i++) {
+  for(unsigned int i = 0; i < S; i++) {
     H(i, i) /= 2.0;
-    for(int j = 0; j < i; j++) {
+    for(unsigned int j = 0; j < i; j++) {
       H(i, j) = 0.0;
     }
   }

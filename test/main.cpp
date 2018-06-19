@@ -49,8 +49,9 @@ int main() {
   cout << bspl.eval(1.0, 1) << endl;
 
   splx::Matrix H = bspl.getZeroHessian();
+  splx::Matrix g = bspl.getZeroG();
 
-  bspl.extendHessianIntegratedSquaredDerivative(H, 2, 0.1);
+  bspl.extendQPIntegratedSquaredDerivative(H, 2, 0.1);
 
   return 0;
 }

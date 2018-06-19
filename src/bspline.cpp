@@ -150,7 +150,7 @@ splx::Matrix splx::BSpline::getZeroHessian() const {
 }
 
 
-void splx::BSpline::extendHessianIntegratedSquaredDerivative(Matrix& H, unsigned int k, double lambda) const {
+void splx::BSpline::extendQPIntegratedSquaredDerivative(Matrix& H, unsigned int k, double lambda) const {
   if(k > m_degree)
     return;
 
@@ -168,19 +168,51 @@ void splx::BSpline::extendHessianIntegratedSquaredDerivative(Matrix& H, unsigned
   for(unsigned int j = m_degree; j < m_controlPoints.size(); j++) {
     // integrate from m_knotVector[j] to m_knotVector[j+1]
     Matrix M = getBasisCoefficientMatrix(j - m_degree, j, m_degree, j).transpose();
+    Matrix Mext(m_degree+1, m_controlPoints.size());
+    for(unsigned int m = 0; m <= m_degree; m++) {
+      for(unsigned int n = 0; n < m_controlPoints.size(); n++) {
+        if(n >= j - m_degree && n <= j) {
+          Mext(m, n) = M(m, n-j+m_degree);
+        } else {
+          Mext(m, n) = 0;
+        }
+      }
+    }
     Matrix SQI(m_degree+1, m_degree+1); // get the integral of the square of the polynomial.
     for(unsigned m = 0; m <= m_degree; m++) {
       for(unsigned int n = 0; n <= m_degree; n++) {
         SQI(m, n) = 2.0 * (std::pow(m_knotVector[j+1], m+n+1) - std::pow(m_knotVector[j], m+n+1)) / (m+n+1);
       }
     }
-    for(unsigned int d = 0; d < m_dimension; d++) {
 
+    Matrix Hext = lambda * Mext.transpose() * D.transpose() * SQI * D * Mext;
+    for(unsigned int d = 0; d < m_dimension; d++) {
+      H.block(d*m_controlPoints.size(), d*m_controlPoints.size(), m_controlPoints.size(), m_controlPoints.size()) += Hext;
     }
   }
-  cout << endl;
-  H(k, k) = lambda;
 }
+
+splx::Vec splx::BSpline::getZeroG() const {
+  unsigned int S = m_controlPoints.size() * m_dimension;
+  Vec g(S);
+  for(unsigned int i = 0; i < S; i++) {
+    g(i) = 0.0;
+  }
+  return g;
+}
+
+void splx::BSpline::extendQPPositionAtU(Matrix& H, Matrix& g, double u, splx::Vec& pos, double theta) const {
+  assert(u >= m_a && u <= m_b);
+  unsigned int je = findSpan(u);
+  Matrix M = getBasisCoefficientMatrix(je - m_degree, je, m_degree, je);
+
+  
+
+  for(unsigned int d = 0; d < m_dimension; d++) {
+
+  }
+}
+
 
 splx::Matrix splx::BSpline::getBasisCoefficientMatrix(unsigned int from, unsigned int to, unsigned int p, unsigned int i) const {
   Matrix result(to-from+1, p+1);
