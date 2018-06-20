@@ -1,6 +1,7 @@
 #ifndef SPLX_BSPLINE_H
 #define SPLX_BSPLINE_H
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Geometry>
 #include <vector>
 #include "spline.h"
 
@@ -71,9 +72,13 @@ namespace splx {
 
 
     /**
+     * Add constraint that requires curve to be on the negative side of hp
+     * when from <= u <= to
      *
+     * Effectively, enforces all points that effects the curve in [from, to] to be
+     * in the negative side of the hp.
     */
-    void extendQPHyperplaneConstraint(QPMatrices& QP, double from, double to, Vec normal, double d) const;
+    void extendQPHyperplaneConstraint(QPMatrices& QP, double from, double to, Hyperplane hp) const;
     /**
       DBG FUNCTIONS
     */

@@ -16,7 +16,7 @@ int main() {
 
   std::vector<splx::Vec> cpts;
 
-  cpts.resize(4);
+  cpts.resize(6);
 
   for(size_t i = 0; i < cpts.size(); i++) {
     splx::Vec v(2);
@@ -54,6 +54,13 @@ int main() {
   bspl.extendQPPositionAt(QP, 0.2, a, 1);
   bspl.extendQPIntegratedSquaredDerivative(QP, 1, 0.2);
   bspl.extendQPBeginningConstraint(QP, 1, a);
+
+  splx::Hyperplane hp(2);
+  hp.normal()(0) = 2;
+  hp.normal()(1) = 3;
+  hp.offset() = 5;
+
+  bspl.extendQPHyperplaneConstraint(QP, 0.25, 0.49, hp);
 
   return 0;
 }

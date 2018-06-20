@@ -4,6 +4,7 @@
 #include <iostream>
 #include <eigen3/Eigen/Dense>
 #include <cmath>
+#include <limits>
 
 using std::cout;
 using std::endl;
@@ -318,5 +319,33 @@ void splx::BSpline::extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, 
     }
     QP.lb(ridx+d) = target(d);
     QP.ub(ridx+d) = target(d);
+  }
+}
+
+void splx::BSpline::extendQPHyperplaneConstraint(QPMatrices& QP, double from, double to, Hyperplane hp) const {
+  assert(hp.normal().rows() == m_dimension);
+  assert(from >= m_a && from <= m_b);
+  assert(to >= m_a && to <= m_b);
+
+  unsigned int js = findSpan(from);
+  unsigned int je = findSpan(to);
+
+  unsigned int ridx = QP.A.rows();
+  QP.A.conservativeResize(QP.A.rows() + je-js+m_degree+1, QP.A.cols());
+  QP.lb.conservativeResize(QP.lb.rows() + je-js+m_degree+1, QP.lb.cols());
+  QP.ub.conservativeResize(QP.ub.rows() + je-js+m_degree+1, QP.ub.cols());
+
+
+  unsigned int S = m_dimension * m_controlPoints.size();
+
+  for(unsigned int i = js-m_degree; i<=je; i++) {
+    for(unsigned int s = 0; s < S; s++) {
+      QP.A(ridx + i - js + m_degree, s) = 0.0;
+    }
+    for(unsigned int d = 0; d < m_dimension; d++) {
+      QP.A(ridx + i - js + m_degree, d*m_controlPoints.size() + i) = hp.normal()(d);
+    }
+    QP.lb(ridx + i - js + m_degree) = std::numeric_limits<double>::lowest();
+    QP.ub(ridx + i - js + m_degree) = hp.offset();
   }
 }

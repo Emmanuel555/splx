@@ -6,6 +6,7 @@ namespace splx {
 
   typedef Eigen::Matrix<double, Eigen::Dynamic, 1> Vec;
   typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Matrix;
+  typedef Eigen::Hyperplane<double, Eigen::Dynamic> Hyperplane;
 
   /**
   * QP is assumed to be formulated as 1/2x^THx + x^Tg
