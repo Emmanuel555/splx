@@ -140,17 +140,26 @@ splx::Vec splx::BSpline::eval(double u, unsigned int k) const {
   return result;
 }
 
-splx::Matrix splx::BSpline::getZeroHessian() const {
+splx::QPMatrices splx::BSpline::getQPMatrices() const {
+  QPMatrices QP;
   unsigned int S = m_controlPoints.size() * m_dimension;
-  Matrix H(S, S);
-  for(unsigned int i = 0; i < S; i++)
+  QP.H.resize(S, S);
+  QP.g.resize(S);
+  for(unsigned int i = 0; i < S; i++) {
+    QP.g(i) = 0.0;
     for(unsigned int j = 0; j < S; j++)
-      H(i, j) = 0.0;
-  return H;
+      QP.H(i, j) = 0.0;
+  }
+  QP.A.resize(0, S);
+  QP.lb.resize(0);
+  QP.ub.resize(0);
+
+  return QP;
 }
 
 
-void splx::BSpline::extendQPIntegratedSquaredDerivative(Matrix& H, unsigned int k, double lambda) const {
+
+void splx::BSpline::extendQPIntegratedSquaredDerivative(QPMatrices& QP, unsigned int k, double lambda) const {
   if(k > m_degree)
     return;
 
@@ -174,7 +183,7 @@ void splx::BSpline::extendQPIntegratedSquaredDerivative(Matrix& H, unsigned int 
         if(n >= j - m_degree && n <= j) {
           Mext(m, n) = M(m, n-j+m_degree);
         } else {
-          Mext(m, n) = 0;
+          Mext(m, n) = 0.0;
         }
       }
     }
@@ -187,29 +196,32 @@ void splx::BSpline::extendQPIntegratedSquaredDerivative(Matrix& H, unsigned int 
 
     Matrix Hext = lambda * Mext.transpose() * D.transpose() * SQI * D * Mext;
     for(unsigned int d = 0; d < m_dimension; d++) {
-      H.block(d*m_controlPoints.size(), d*m_controlPoints.size(), m_controlPoints.size(), m_controlPoints.size()) += Hext;
+      QP.H.block(d*m_controlPoints.size(), d*m_controlPoints.size(), m_controlPoints.size(), m_controlPoints.size()) += Hext;
     }
   }
 }
 
-splx::Vec splx::BSpline::getZeroG() const {
-  unsigned int S = m_controlPoints.size() * m_dimension;
-  Vec g(S);
-  for(unsigned int i = 0; i < S; i++) {
-    g(i) = 0.0;
-  }
-  return g;
-}
 
-void splx::BSpline::extendQPPositionAtU(Matrix& H, Matrix& g, double u, splx::Vec& pos, double theta) const {
+void splx::BSpline::extendQPPositionAt(QPMatrices& QP, double u, const splx::Vec& pos, double theta) const {
   assert(u >= m_a && u <= m_b);
   unsigned int je = findSpan(u);
-  Matrix M = getBasisCoefficientMatrix(je - m_degree, je, m_degree, je);
 
-  
+  std::vector<double> res = evalBasisFuncs(u, m_degree, 0, je-m_degree, je);
+  Vec Mext(m_controlPoints.size());
+  for(unsigned int i = 0; i<m_controlPoints.size(); i++) {
+    if(i >= je-m_degree && i<=je) {
+      Mext(i) = res[i-je+m_degree];
+    } else {
+      Mext(i) = 0.0;
+    }
+  }
+
+  Matrix Hext = 2 * theta * Mext * Mext.transpose();
 
   for(unsigned int d = 0; d < m_dimension; d++) {
-
+    Vec Gext = -2 * pos[d] * Mext;
+    QP.g.block(d*m_controlPoints.size(), 0, m_controlPoints.size(), 1) += Gext;
+    QP.H.block(d*m_controlPoints.size(), d*m_controlPoints.size(), m_controlPoints.size(), m_controlPoints.size()) += Hext;
   }
 }
 

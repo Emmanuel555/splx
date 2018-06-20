@@ -37,22 +37,13 @@ namespace splx {
     Vec eval(double u, unsigned int k) const;
 
 
-
     /**
-     * Return hessian matrix for QP where every element is 0.0.
-     * In all functions that extends this hessian, order of variables is assumed to be
+     * In all functions that extends these matrices, order of variables is assumed to be
      * p0x, p1x, p2x, ..., pnx, p0y, p1y, ..., pny, ...
      *
-     * Notice that this matrix is hessian. Therefore, it a symmetric and
-     * it can be used in QP as 1/2 p'Hp
     */
-    Matrix getZeroHessian() const;
+    QPMatrices getQPMatrices() const;
 
-    /**
-     *
-     *
-    */
-    Vec getZeroG() const;
 
     /**
      * Add integral from m_a to m_b of square of norm of k^th derivative of the spline
@@ -61,10 +52,17 @@ namespace splx {
      * order of variables is assumed to be
      * p0x, p1x, p2x, ..., pnx, p0y, p1y, ..., pny, ...
     */
-    void extendQPIntegratedSquaredDerivative(Matrix& H, unsigned int k, double lambda) const;
+    void extendQPIntegratedSquaredDerivative(QPMatrices& QP, unsigned int k, double lambda) const;
 
 
-    void extendQPPositionAtU(Matrix& H, Matrix& g, double u, Vec& pos, double theta) const;
+    /**
+     * Add the cost theta * ||f(u) - pos||^2 to H and g.
+     *
+     * order of variables is assumed to be
+     * p0x, p1x, p2x, ..., pnx, p0y, p1y, ..., pny, ...
+    */
+
+    void extendQPPositionAt(QPMatrices& QP, double u, const Vec& pos, double theta) const;
     /**
       DBG FUNCTIONS
     */

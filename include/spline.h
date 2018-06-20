@@ -7,6 +7,20 @@ namespace splx {
   typedef Eigen::Matrix<double, Eigen::Dynamic, 1> Vec;
   typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Matrix;
 
+  /**
+  * QP is assumed to be formulated as 1/2x^THx + x^Tg
+  * subject to
+  * lb <= Ax <= ub
+  * where x is a column vector of decision variables.
+  */
+  typedef struct QPMatrices {
+    Matrix H;
+    Vec g;
+    Matrix A;
+    Vec lb;
+    Vec ub;
+  } QPMatrices;
+
   class Spline {
   protected:
     unsigned int fac(unsigned int n) const;
@@ -18,15 +32,13 @@ namespace splx {
     */
     virtual Vec eval(double u, unsigned int k) const = 0;
 
-    /**
-     * Return hessian matrix for QP where every element is 0.0.
-    */
-    virtual Matrix getZeroHessian() const = 0;
 
     /**
-     * Return the g vector for QP where every element is 0.0.
+     * Every element of H is 0.0
+     * Every element of g is 0.0
     */
-    virtual Vec getZeroG() const = 0;
+    virtual QPMatrices getQPMatrices() const = 0;
+
 
     /**
      * Converts hessian matrix to upper triangular matrix that can be used in QPs

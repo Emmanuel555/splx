@@ -16,7 +16,7 @@ int main() {
 
   std::vector<splx::Vec> cpts;
 
-  cpts.resize(20);
+  cpts.resize(4);
 
   for(size_t i = 0; i < cpts.size(); i++) {
     splx::Vec v(2);
@@ -48,10 +48,11 @@ int main() {
   cout << "v" << endl;
   cout << bspl.eval(1.0, 1) << endl;
 
-  splx::Matrix H = bspl.getZeroHessian();
-  splx::Matrix g = bspl.getZeroG();
+  splx::QPMatrices QP = bspl.getQPMatrices();
 
-  bspl.extendQPIntegratedSquaredDerivative(H, 2, 0.1);
+  splx::Vec a(2);
+  bspl.extendQPPositionAt(QP, 0.2, a, 1);
+  bspl.extendQPIntegratedSquaredDerivative(QP, 1, 0.2);
 
   return 0;
 }
