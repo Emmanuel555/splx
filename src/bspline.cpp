@@ -301,9 +301,9 @@ void splx::BSpline::extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, 
   QP.lb.conservativeResize(QP.lb.rows() + m_dimension);
   QP.ub.conservativeResize(QP.ub.rows() + m_dimension);
 
-  unsigned int je = findSpan(0);
+  unsigned int je = findSpan(m_a);
 
-  std::vector<double> basis = evalBasisFuncs(0, m_degree, k, je-m_degree, je);
+  std::vector<double> basis = evalBasisFuncs(m_a, m_degree, k, je-m_degree, je);
 
   unsigned int S = m_controlPoints.size() * m_dimension;
 

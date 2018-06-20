@@ -68,6 +68,12 @@ namespace splx {
      * Add constraint that requires the k^th derivative of spline at u=0 to be target.
     */
     void extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, const Vec& target) const;
+
+
+    /**
+     *
+    */
+    void extendQPHyperplaneConstraint(QPMatrices& QP, double from, double to, Vec normal, double d) const;
     /**
       DBG FUNCTIONS
     */
