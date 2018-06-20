@@ -18,5 +18,5 @@ src/spline.cpp
 src/bspline.cpp
 )
 
-add_executable(main test/main.cpp)
-target_link_libraries(main splx)
+add_executable(splxtest test/main.cpp)
+target_link_libraries(splxtest splx)
