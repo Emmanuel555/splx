@@ -53,6 +53,7 @@ int main() {
   splx::Vec a(2);
   bspl.extendQPPositionAt(QP, 0.2, a, 1);
   bspl.extendQPIntegratedSquaredDerivative(QP, 1, 0.2);
+  bspl.extendQPBeginningConstraint(QP, 1, a);
 
   return 0;
 }

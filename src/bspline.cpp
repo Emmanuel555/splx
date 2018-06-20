@@ -204,13 +204,14 @@ void splx::BSpline::extendQPIntegratedSquaredDerivative(QPMatrices& QP, unsigned
 
 void splx::BSpline::extendQPPositionAt(QPMatrices& QP, double u, const splx::Vec& pos, double theta) const {
   assert(u >= m_a && u <= m_b);
+  assert(pos.rows() == m_dimension);
   unsigned int je = findSpan(u);
 
-  std::vector<double> res = evalBasisFuncs(u, m_degree, 0, je-m_degree, je);
+  std::vector<double> basis = evalBasisFuncs(u, m_degree, 0, je-m_degree, je);
   Vec Mext(m_controlPoints.size());
   for(unsigned int i = 0; i<m_controlPoints.size(); i++) {
     if(i >= je-m_degree && i<=je) {
-      Mext(i) = res[i-je+m_degree];
+      Mext(i) = basis[i-je+m_degree];
     } else {
       Mext(i) = 0.0;
     }
@@ -289,4 +290,33 @@ splx::Vec splx::BSpline::eval_dbg(double u) const {
     res += basis(i) * m_controlPoints[i+je-m_degree];
   }
   return res;
+}
+
+
+void splx::BSpline::extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, const Vec& target) const {
+  assert(k <= m_degree);
+  assert(target.rows() == m_dimension);
+  unsigned int ridx = QP.A.rows();
+  QP.A.conservativeResize(QP.A.rows() + m_dimension, QP.A.cols());
+  QP.lb.conservativeResize(QP.lb.rows() + m_dimension);
+  QP.ub.conservativeResize(QP.ub.rows() + m_dimension);
+
+  unsigned int je = findSpan(0);
+
+  std::vector<double> basis = evalBasisFuncs(0, m_degree, k, je-m_degree, je);
+
+  unsigned int S = m_controlPoints.size() * m_dimension;
+
+
+  for(unsigned int d = 0; d < m_dimension; d++) {
+    for(unsigned int m = 0; m < S; m++) {
+      if(m >= d*m_controlPoints.size()+je-m_degree && m <= d*m_controlPoints.size()+je) {
+        QP.A(ridx+d, m) = basis[m - d*m_controlPoints.size() - je + m_degree];
+      } else {
+        QP.A(ridx+d, m) = 0.0;
+      }
+    }
+    QP.lb(ridx+d) = target(d);
+    QP.ub(ridx+d) = target(d);
+  }
 }

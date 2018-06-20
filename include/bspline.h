@@ -63,6 +63,11 @@ namespace splx {
     */
 
     void extendQPPositionAt(QPMatrices& QP, double u, const Vec& pos, double theta) const;
+
+    /**
+     * Add constraint that requires the k^th derivative of spline at u=0 to be target.
+    */
+    void extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, const Vec& target) const;
     /**
       DBG FUNCTIONS
     */
