@@ -79,6 +79,8 @@ namespace splx {
      * in the negative side of the hp.
     */
     void extendQPHyperplaneConstraint(QPMatrices& QP, double from, double to, Hyperplane hp) const;
+
+
     /**
       DBG FUNCTIONS
     */
@@ -87,6 +89,10 @@ namespace splx {
     void printControlPoints() const;
     void printKnotVectorNumbered() const;
 
+
+    double m_a; // first p+1 knot values
+    double m_b; // last p+1 knot values
+
   private:
     unsigned int m_degree; // degree of basis functions
     /**
@@ -94,8 +100,6 @@ namespace splx {
       defines the dimension of control points as well.
     */
     unsigned int m_dimension;
-    double m_a; // first p+1 knot values
-    double m_b; // last p+1 knot values
     std::vector<double> m_knotVector; // knot vector
     std::vector<Vec> m_controlPoints; // control points
     /**
