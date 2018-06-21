@@ -155,6 +155,12 @@ splx::QPMatrices splx::BSpline::getQPMatrices() const {
   QP.lb.resize(0);
   QP.ub.resize(0);
 
+  QP.x.resize(S);
+  for(unsigned int i = 0; i < m_controlPoints.size(); i++) {
+    for(unsigned int d = 0; d < m_dimension; d++) {
+      QP.x(d*m_controlPoints.size() + i) = m_controlPoints[i](d);
+    }
+  }
   return QP;
 }
 

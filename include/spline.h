@@ -20,6 +20,7 @@ namespace splx {
     Matrix A;
     Vec lb;
     Vec ub;
+    Vec x;
   } QPMatrices;
 
   class Spline {
@@ -37,6 +38,7 @@ namespace splx {
     /**
      * Every element of H is 0.0
      * Every element of g is 0.0
+     * Every element of x is the current values of decision variables.
     */
     virtual QPMatrices getQPMatrices() const = 0;
 
