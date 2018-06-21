@@ -4,6 +4,7 @@
 #include <eigen3/Eigen/Geometry>
 #include <vector>
 #include "spline.h"
+#include <utility>
 
 namespace splx {
 
@@ -80,6 +81,17 @@ namespace splx {
     */
     void extendQPHyperplaneConstraint(QPMatrices& QP, double from, double to, Hyperplane hp) const;
 
+    /*
+     * returns the inclusive index range of points that effects the curve
+     * from u = from to u = to.
+    */
+    std::pair<unsigned int, unsigned int> affectingPoints(double from, double to) const;
+
+
+    /*
+     * Getter for k^th control point
+    */
+    const Vec& getCP(unsigned int k) const;
 
     /**
       DBG FUNCTIONS

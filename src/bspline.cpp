@@ -333,25 +333,38 @@ void splx::BSpline::extendQPHyperplaneConstraint(QPMatrices& QP, double from, do
   assert(from >= m_a && from <= m_b);
   assert(to >= m_a && to <= m_b);
 
-  unsigned int js = findSpan(from);
-  unsigned int je = findSpan(to);
+  auto aff = affectingPoints(from, to);
+
+  unsigned int jl = aff.first;
+  unsigned int jr = aff.second;
 
   unsigned int ridx = QP.A.rows();
-  QP.A.conservativeResize(QP.A.rows() + je-js+m_degree+1, QP.A.cols());
-  QP.lb.conservativeResize(QP.lb.rows() + je-js+m_degree+1, QP.lb.cols());
-  QP.ub.conservativeResize(QP.ub.rows() + je-js+m_degree+1, QP.ub.cols());
+  QP.A.conservativeResize(QP.A.rows() + jr-jl+1, QP.A.cols());
+  QP.lb.conservativeResize(QP.lb.rows() + jr-jl+1, QP.lb.cols());
+  QP.ub.conservativeResize(QP.ub.rows() + jr-jl+1, QP.ub.cols());
 
 
   unsigned int S = m_dimension * m_controlPoints.size();
 
-  for(unsigned int i = js-m_degree; i<=je; i++) {
+  for(unsigned int i = jl; i<=jr; i++) {
     for(unsigned int s = 0; s < S; s++) {
-      QP.A(ridx + i - js + m_degree, s) = 0.0;
+      QP.A(ridx + i - jl, s) = 0.0;
     }
     for(unsigned int d = 0; d < m_dimension; d++) {
-      QP.A(ridx + i - js + m_degree, d*m_controlPoints.size() + i) = hp.normal()(d);
+      QP.A(ridx + i - jl, d*m_controlPoints.size() + i) = hp.normal()(d);
     }
-    QP.lb(ridx + i - js + m_degree) = std::numeric_limits<double>::lowest();
-    QP.ub(ridx + i - js + m_degree) = hp.offset();
+    QP.lb(ridx + i - jl) = std::numeric_limits<double>::lowest();
+    QP.ub(ridx + i - jl) = hp.offset();
   }
+}
+
+std::pair<unsigned int, unsigned int> splx::BSpline::affectingPoints(double from, double to) const {
+  unsigned int js = findSpan(from);
+  unsigned int je = findSpan(to);
+
+  return std::make_pair(js - m_degree, je);
+}
+
+const splx::Vec& splx::BSpline::getCP(unsigned int k) const {
+  return m_controlPoints[k];
 }
