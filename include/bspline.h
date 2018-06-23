@@ -71,6 +71,11 @@ namespace splx {
     */
     void extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, const Vec& target) const;
 
+    /**
+     * Add constraints that requires control points from index from to index to to be on the
+     * negative side of hp.
+    */
+    void extendQPHyperplaneConstraint(QPMatrices& QP, unsigned int from, unsigned int to, const Hyperplane& hp) const;
 
     /**
      * Add constraint that requires curve to be on the negative side of hp
@@ -79,7 +84,7 @@ namespace splx {
      * Effectively, enforces all points that effects the curve in [from, to] to be
      * in the negative side of the hp.
     */
-    void extendQPHyperplaneConstraint(QPMatrices& QP, double from, double to, Hyperplane hp) const;
+    void extendQPHyperplaneConstraint(QPMatrices& QP, double from, double to, const Hyperplane& hp) const;
 
     /*
      * returns the inclusive index range of points that effects the curve

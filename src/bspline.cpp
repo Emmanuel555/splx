@@ -327,34 +327,37 @@ void splx::BSpline::extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, 
   }
 }
 
-void splx::BSpline::extendQPHyperplaneConstraint(QPMatrices& QP, double from, double to, Hyperplane hp) const {
+void splx::BSpline::extendQPHyperplaneConstraint(QPMatrices& QP, unsigned int from, unsigned int to, const Hyperplane& hp) const {
+  assert(to < m_controlPoints.size());
+
+  unsigned int ridx = QP.A.rows();
+  QP.A.conservativeResize(QP.A.rows() + to-from+1, QP.A.cols());
+  QP.lb.conservativeResize(QP.lb.rows() + to-from+1, QP.lb.cols());
+  QP.ub.conservativeResize(QP.ub.rows() + to-from+1, QP.ub.cols());
+
+
+  unsigned int S = m_dimension * m_controlPoints.size();
+
+  for(unsigned int i = from; i<=to; i++) {
+    for(unsigned int s = 0; s < S; s++) {
+      QP.A(ridx + i - from, s) = 0.0;
+    }
+    for(unsigned int d = 0; d < m_dimension; d++) {
+      QP.A(ridx + i - from, d*m_controlPoints.size() + i) = hp.normal()(d);
+    }
+    QP.lb(ridx + i - from) = std::numeric_limits<double>::lowest();
+    QP.ub(ridx + i - from) = hp.offset();
+  }
+}
+
+void splx::BSpline::extendQPHyperplaneConstraint(QPMatrices& QP, double from, double to, const Hyperplane& hp) const {
   assert(hp.normal().rows() == m_dimension);
   assert(from >= m_a && from <= m_b);
   assert(to >= m_a && to <= m_b);
 
   auto aff = affectingPoints(from, to);
 
-  unsigned int jl = aff.first;
-  unsigned int jr = aff.second;
-
-  unsigned int ridx = QP.A.rows();
-  QP.A.conservativeResize(QP.A.rows() + jr-jl+1, QP.A.cols());
-  QP.lb.conservativeResize(QP.lb.rows() + jr-jl+1, QP.lb.cols());
-  QP.ub.conservativeResize(QP.ub.rows() + jr-jl+1, QP.ub.cols());
-
-
-  unsigned int S = m_dimension * m_controlPoints.size();
-
-  for(unsigned int i = jl; i<=jr; i++) {
-    for(unsigned int s = 0; s < S; s++) {
-      QP.A(ridx + i - jl, s) = 0.0;
-    }
-    for(unsigned int d = 0; d < m_dimension; d++) {
-      QP.A(ridx + i - jl, d*m_controlPoints.size() + i) = hp.normal()(d);
-    }
-    QP.lb(ridx + i - jl) = std::numeric_limits<double>::lowest();
-    QP.ub(ridx + i - jl) = hp.offset();
-  }
+  extendQPHyperplaneConstraint(QP, aff.first, aff.second, hp);
 }
 
 std::pair<unsigned int, unsigned int> splx::BSpline::affectingPoints(double from, double to) const {
