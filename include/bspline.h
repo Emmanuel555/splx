@@ -101,8 +101,8 @@ namespace splx {
     /*
      * Interpolate from point 'from' to point 'to' with n points.
      * 'from' is the 1st point, 'to' is nth point.
-     * Repeat 'to' p+1 times to make the curve end at 'to'.
-     * In the end there are n + p points added.
+     * Repeat 'to' m_degree+1 times to make the curve end at 'to'.
+     * In the end there are n + m_degree points added.
     */
     void interpolateEndAtTo(const Vec& from, const Vec& to, unsigned int n);
 
