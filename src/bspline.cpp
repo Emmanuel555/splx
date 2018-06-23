@@ -23,7 +23,6 @@ splx::BSpline::BSpline(unsigned int deg, unsigned int dim, double A, double B,
   }
   m_controlPoints = cpts;
   assert(m_controlPoints.size() >= m_degree + 1);
-  generateUniformKnotVector();
 }
 
 void splx::BSpline::generateUniformKnotVector() {
@@ -367,4 +366,17 @@ std::pair<unsigned int, unsigned int> splx::BSpline::affectingPoints(double from
 
 const splx::Vec& splx::BSpline::getCP(unsigned int k) const {
   return m_controlPoints[k];
+}
+
+
+void splx::BSpline::interpolateEndAtTo(const Vec& from, const Vec& to, unsigned int n) {
+  assert(n >= 2);
+  Vec step = (to - from) / (n-1);
+  for(unsigned int i = 0; i < n; i++) {
+    m_controlPoints.push_back(from + step * i);
+  }
+
+  for(unsigned int i = 0; i < m_degree; i++) {
+    m_controlPoints.push_back(to);
+  }
 }

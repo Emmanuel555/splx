@@ -93,6 +93,27 @@ namespace splx {
     */
     const Vec& getCP(unsigned int k) const;
 
+    /*
+     * Interpolate from point 'from' to point 'to' with n points.
+     * 'from' is the 1st point, 'to' is nth point.
+     * Repeat 'to' p+1 times to make the curve end at 'to'.
+     * In the end there are n + p points added.
+    */
+    void interpolateEndAtTo(const Vec& from, const Vec& to, unsigned int n);
+
+
+    /**
+      * Generates knot vector from scratch
+      *
+      * @assumes control points are already set
+    */
+    void generateUniformKnotVector();
+
+    /**
+     * Clear control points array.
+    */
+    void clearControlPoints() const;
+
     /**
       DBG FUNCTIONS
     */
@@ -114,12 +135,6 @@ namespace splx {
     unsigned int m_dimension;
     std::vector<double> m_knotVector; // knot vector
     std::vector<Vec> m_controlPoints; // control points
-    /**
-      * Generates knot vector from scratch
-      *
-      * @assumes control points are already set
-    */
-    void generateUniformKnotVector();
 
 
     /**

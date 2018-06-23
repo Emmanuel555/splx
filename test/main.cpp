@@ -28,6 +28,7 @@ int main() {
   }
 
   splx::BSpline bspl(2, 2, 0, 1.0, cpts);
+  bspl.generateUniformKnotVector();
 
   int i = 0;
 
