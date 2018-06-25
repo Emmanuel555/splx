@@ -103,8 +103,10 @@ namespace splx {
      * 'from' is the 1st point, 'to' is nth point.
      * Repeat 'to' m_degree+1 times to make the curve end at 'to'.
      * In the end there are n + m_degree points added.
+     *
+     * returns inclusive index range of added points in m_controlPoints array.
     */
-    void interpolateEndAtTo(const Vec& from, const Vec& to, unsigned int n);
+    std::pair<unsigned int, unsigned int> interpolateEndAtTo(const Vec& from, const Vec& to, unsigned int n);
 
 
     /**

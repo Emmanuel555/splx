@@ -372,8 +372,10 @@ const splx::Vec& splx::BSpline::getCP(unsigned int k) const {
 }
 
 
-void splx::BSpline::interpolateEndAtTo(const Vec& from, const Vec& to, unsigned int n) {
+std::pair<unsigned int, unsigned int> splx::BSpline::interpolateEndAtTo(const Vec& from, const Vec& to, unsigned int n) {
   assert(n >= 2);
+  std::pair<unsigned int, unsigned int> result;
+  result.first = m_controlPoints.size();
   Vec step = (to - from) / (n-1);
   for(unsigned int i = 0; i < n; i++) {
     m_controlPoints.push_back(from + step * i);
@@ -382,4 +384,6 @@ void splx::BSpline::interpolateEndAtTo(const Vec& from, const Vec& to, unsigned 
   for(unsigned int i = 0; i < m_degree; i++) {
     m_controlPoints.push_back(to);
   }
+  result.second = m_controlPoints.size() - 1;
+  return result;
 }
