@@ -86,6 +86,12 @@ namespace splx {
     */
     void extendQPHyperplaneConstraint(QPMatrices& QP, double from, double to, const Hyperplane& hp) const;
 
+    /**
+     * Add constraints that requires all decision variables to be less than ub and more than lb.
+     *
+     * Effectively, it constraints the curve to be inside a box.
+    */
+    void extendQPDecisionConstraint(QPMatrices&QP, double lb, double ub) const;
     /*
      * returns the inclusive index range of points that effects the curve
      * from u = from to u = to.
@@ -119,7 +125,12 @@ namespace splx {
     /**
      * Clear control points array.
     */
-    void clearControlPoints() const;
+    void clearControlPoints();
+
+    /**
+     * Load control points from QP.x
+    */
+    void loadControlPoints(const QPMatrices& QP);
 
     /**
       DBG FUNCTIONS
@@ -130,18 +141,18 @@ namespace splx {
     void printKnotVectorNumbered() const;
 
 
+    unsigned int m_degree; // degree of basis functions
     double m_a; // first p+1 knot values
     double m_b; // last p+1 knot values
+    std::vector<Vec> m_controlPoints; // control points
 
   private:
-    unsigned int m_degree; // degree of basis functions
     /**
       dimension that spline is defined in,
       defines the dimension of control points as well.
     */
     unsigned int m_dimension;
     std::vector<double> m_knotVector; // knot vector
-    std::vector<Vec> m_controlPoints; // control points
 
 
     /**

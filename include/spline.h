@@ -18,8 +18,10 @@ namespace splx {
     Matrix H;
     Vec g;
     Matrix A;
-    Vec lb;
-    Vec ub;
+    Vec lbA;
+    Vec ubA;
+    Vec lbX;
+    Vec ubX;
     Vec x;
   } QPMatrices;
 

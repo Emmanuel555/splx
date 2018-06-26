@@ -23,6 +23,7 @@ splx::BSpline::BSpline(unsigned int deg, unsigned int dim, double A, double B,
   }
   m_controlPoints = cpts;
   assert(m_controlPoints.size() >= m_degree + 1);
+  generateUniformKnotVector();
 }
 
 void splx::BSpline::generateUniformKnotVector() {
@@ -151,8 +152,15 @@ splx::QPMatrices splx::BSpline::getQPMatrices() const {
       QP.H(i, j) = 0.0;
   }
   QP.A.resize(0, S);
-  QP.lb.resize(0);
-  QP.ub.resize(0);
+  QP.lbA.resize(0);
+  QP.ubA.resize(0);
+
+  QP.lbX.resize(S);
+  QP.ubX.resize(S);
+  for(unsigned int i = 0; i < S; i++) {
+    QP.lbX(i) = std::numeric_limits<double>::lowest();
+    QP.ubX(i) = std::numeric_limits<double>::max();
+  }
 
   QP.x.resize(S);
   for(unsigned int i = 0; i < m_controlPoints.size(); i++) {
@@ -304,8 +312,8 @@ void splx::BSpline::extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, 
   assert(target.rows() == m_dimension);
   unsigned int ridx = QP.A.rows();
   QP.A.conservativeResize(QP.A.rows() + m_dimension, QP.A.cols());
-  QP.lb.conservativeResize(QP.lb.rows() + m_dimension);
-  QP.ub.conservativeResize(QP.ub.rows() + m_dimension);
+  QP.lbA.conservativeResize(QP.lbA.rows() + m_dimension);
+  QP.ubA.conservativeResize(QP.ubA.rows() + m_dimension);
 
   unsigned int je = findSpan(m_a);
 
@@ -322,8 +330,8 @@ void splx::BSpline::extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, 
         QP.A(ridx+d, m) = 0.0;
       }
     }
-    QP.lb(ridx+d) = target(d);
-    QP.ub(ridx+d) = target(d);
+    QP.lbA(ridx+d) = target(d);
+    QP.ubA(ridx+d) = target(d);
   }
 }
 
@@ -332,8 +340,8 @@ void splx::BSpline::extendQPHyperplaneConstraint(QPMatrices& QP, unsigned int fr
 
   unsigned int ridx = QP.A.rows();
   QP.A.conservativeResize(QP.A.rows() + to-from+1, QP.A.cols());
-  QP.lb.conservativeResize(QP.lb.rows() + to-from+1, QP.lb.cols());
-  QP.ub.conservativeResize(QP.ub.rows() + to-from+1, QP.ub.cols());
+  QP.lbA.conservativeResize(QP.lbA.rows() + to-from+1);
+  QP.ubA.conservativeResize(QP.ubA.rows() + to-from+1);
 
 
   unsigned int S = m_dimension * m_controlPoints.size();
@@ -345,8 +353,8 @@ void splx::BSpline::extendQPHyperplaneConstraint(QPMatrices& QP, unsigned int fr
     for(unsigned int d = 0; d < m_dimension; d++) {
       QP.A(ridx + i - from, d*m_controlPoints.size() + i) = hp.normal()(d);
     }
-    QP.lb(ridx + i - from) = std::numeric_limits<double>::lowest();
-    QP.ub(ridx + i - from) = hp.offset();
+    QP.lbA(ridx + i - from) = std::numeric_limits<double>::lowest();
+    QP.ubA(ridx + i - from) = hp.offset();
   }
 }
 
@@ -386,4 +394,23 @@ std::pair<unsigned int, unsigned int> splx::BSpline::interpolateEndAtTo(const Ve
   }
   result.second = m_controlPoints.size() - 1;
   return result;
+}
+
+void splx::BSpline::loadControlPoints(const QPMatrices& QP) {
+  for(unsigned int i = 0; i < m_controlPoints.size(); i++) {
+    for(unsigned int d = 0; d < m_dimension; d++) {
+      m_controlPoints[i](d) = QP.x(d * m_controlPoints.size() + i);
+    }
+  }
+}
+
+void splx::BSpline::clearControlPoints() {
+  m_controlPoints.clear();
+}
+
+void splx::BSpline::extendQPDecisionConstraint(QPMatrices& QP, double lb, double ub) const {
+  for(unsigned int i=0; i < QP.lbX.rows(); i++) {
+    QP.lbX(i) = lb;
+    QP.ubX(i) = ub;
+  }
 }
