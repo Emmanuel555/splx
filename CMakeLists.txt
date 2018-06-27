@@ -7,9 +7,11 @@ set(CMAKE_BUILD_TYPE Debug)
 
 find_package(Eigen3 REQUIRED)
 
+
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
   ${EIGEN3_INCLUDE_DIR}
+  ${QPOASES_INCLUDE_DIR}
 )
 
 add_library(
@@ -19,4 +21,4 @@ src/bspline.cpp
 )
 
 add_executable(splxtest test/main.cpp)
-target_link_libraries(splxtest splx)
+target_link_libraries(splxtest splx qpOASES)

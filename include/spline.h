@@ -5,7 +5,7 @@
 namespace splx {
 
   typedef Eigen::Matrix<double, Eigen::Dynamic, 1> Vec;
-  typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Matrix;
+  typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
   typedef Eigen::Hyperplane<double, Eigen::Dynamic> Hyperplane;
 
   /**

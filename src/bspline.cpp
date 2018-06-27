@@ -234,7 +234,7 @@ void splx::BSpline::extendQPPositionAt(QPMatrices& QP, double u, const splx::Vec
   Matrix Hext = 2 * theta * Mext * Mext.transpose();
 
   for(unsigned int d = 0; d < m_dimension; d++) {
-    Vec Gext = -2 * pos[d] * Mext;
+    Vec Gext = -2 * theta * pos[d] * Mext;
     QP.g.block(d*m_controlPoints.size(), 0, m_controlPoints.size(), 1) += Gext;
     QP.H.block(d*m_controlPoints.size(), d*m_controlPoints.size(), m_controlPoints.size(), m_controlPoints.size()) += Hext;
   }
