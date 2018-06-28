@@ -58,6 +58,15 @@ int main() {
   cpts.push_back(vec);
   cpts.push_back(vec);
   cpts.push_back(vec);
+  cpts.push_back(vec);
+  cpts.push_back(vec);
+  cpts.push_back(vec);
+  cpts.push_back(vec);
+  cpts.push_back(vec);
+  cpts.push_back(vec);
+  cpts.push_back(vec);
+  cpts.push_back(vec);
+  cpts.push_back(vec);
 
   splx::BSpline bspl(4, 2, 0, 7.0, cpts);
   bspl.generateUniformKnotVector();
@@ -69,8 +78,8 @@ int main() {
 
   bspl.extendQPIntegratedSquaredDerivative(QP, 1, 1.0);
   bspl.extendQPIntegratedSquaredDerivative(QP, 2, 1.0);
-  vec(0) = 7.0;
-  vec(1) = 7.0;
+  vec(0) = -7.0;
+  vec(1) = -7.0;
   bspl.extendQPBeginningConstraint(QP, 0, vec);
   vec(0) = 3;
   vec(1) = 3;
@@ -93,6 +102,13 @@ int main() {
   vec(1) = -8.5;
   bspl.extendQPPositionAt(QP, 7.0, vec, 1000.0);
   bspl.extendQPDecisionConstraint(QP, -10, 10);
+
+  splx::Hyperplane hp(2);
+  hp.normal()(0) = 2;
+  hp.normal()(1) = 1;
+  hp.offset() = 0;
+
+  bspl.extendQPHyperplaneConstraint(QP, 5U, 25U, hp);
 
 
   qpOASES::QProblem qp(QP.x.rows(), QP.A.rows(), qpOASES::HST_SEMIDEF);
