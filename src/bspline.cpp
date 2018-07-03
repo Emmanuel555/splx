@@ -414,3 +414,19 @@ void splx::BSpline::extendQPDecisionConstraint(QPMatrices& QP, double lb, double
     QP.ubX(i) = ub;
   }
 }
+
+void splx::BSpline::extendQPHyperplanePenalty(QPMatrices& QP, unsigned int from, unsigned int to, const Hyperplane& hp, double alpha) const {
+  assert(hp.normal().rows() == m_dimension);
+  assert(to >= from);
+  assert(to < m_controlPoints.size());
+  const Vec& normal = hp.normal();
+  const double dist = hp.offset();
+  for(unsigned int i = from; i <= to; i++) {
+    for(unsigned int d1 = 0; d1 < m_dimension; d1++) {
+      for(unsigned int d2 = 0; d2 < m_dimension; d2++) {
+        QP.H(d1 * m_controlPoints.size() + i, d2 * m_controlPoints.size() + i) += 2.0 * alpha * normal(d1) * normal(d2);
+      }
+      QP.g(d1 * m_controlPoints.size() + i) += -7 * alpha * normal(d1);
+    }
+  }
+}
