@@ -422,11 +422,8 @@ void splx::BSpline::extendQPHyperplanePenalty(QPMatrices& QP, unsigned int from,
   const Vec& normal = hp.normal();
   const double dist = hp.offset();
   for(unsigned int i = from; i <= to; i++) {
-    for(unsigned int d1 = 0; d1 < m_dimension; d1++) {
-      for(unsigned int d2 = 0; d2 < m_dimension; d2++) {
-        QP.H(d1 * m_controlPoints.size() + i, d2 * m_controlPoints.size() + i) += 2.0 * alpha * normal(d1) * normal(d2);
-      }
-      QP.g(d1 * m_controlPoints.size() + i) += -7 * alpha * normal(d1);
+    for(unsigned int d = 0; d < m_dimension; d++) {
+      QP.g(d * m_controlPoints.size() + i) += alpha * normal(d);
     }
   }
 }

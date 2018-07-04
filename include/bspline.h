@@ -61,6 +61,11 @@ namespace splx {
      * Adds -alpha * (hp.normal (dot) pt - d) ^ 2 for each point from "from" to "to".
      * Effectively punishes the points as they get closer to the hyperplane
      *
+     * IMPORTANT: Expects QP.lbX and QP.ubX to be set before!!!
+     * The reason is maximizing the distance to the hyperplane is simulated by
+     * minimizing the distance to the hyperplane with same normal but in the boundary of variable space.
+     *
+     *
      * order of variables is assumed to be
      * p0x, p1x, p2x, ..., pnx, p1y, ..., pny, ...
     */
