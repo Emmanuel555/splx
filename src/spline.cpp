@@ -11,8 +11,8 @@ unsigned int splx::Spline::fac(unsigned int n) const {
 
 unsigned int splx::Spline::comb(unsigned int n, unsigned int k) const {
   k = std::min(k, n-k);
-  int top = 1;
-  int bottom = 1;
+  unsigned int top = 1;
+  unsigned int bottom = 1;
   for(unsigned int i=0; i<k; i++) {
     bottom *= (i+1);
     top *= (n-i);
