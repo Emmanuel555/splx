@@ -6,6 +6,7 @@
 #include <cmath>
 #include <limits>
 #include <numeric>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
@@ -23,11 +24,10 @@ splx::BSpline::BSpline(unsigned int deg, unsigned int dim, double A, double B,
     assert(cpts[i].rows() == m_dimension);
   }
   m_controlPoints = cpts;
-  assert(m_controlPoints.size() >= m_degree + 1);
-  generateClampedUniformKnotVector();
 }
 
 void splx::BSpline::generateClampedUniformKnotVector() {
+  assert(m_controlPoints.size() >= m_degree + 1);
   m_knotVector.clear();
   m_knotVector.insert(m_knotVector.begin(), m_degree+1, m_a);
   unsigned int insert_count = m_controlPoints.size() - m_degree - 1;
@@ -37,29 +37,18 @@ void splx::BSpline::generateClampedUniformKnotVector() {
   m_knotVector.insert(m_knotVector.end(), m_degree+1, m_b);
 }
 
-void splx::BSpline::generateClampedNonuniformKnotVector(const std::vector<double>& w) {
+void splx::BSpline::generateNonclampedUniformKnotVector() {
   m_knotVector.clear();
-  m_knotVector.insert(m_knotVector.begin(), m_degree+1, m_a);
-  double span = m_b - m_a;
-  unsigned int insert_count = m_controlPoints.size() - m_degree - 1;
-  unsigned int insert_count_per_step = insert_count / w.size();
-  double totalw = std::accumulate(w.begin(), w.end(), 0);
-  double last_inserted = m_a;
-  for(size_t i = 0; i < w.size() - 1; i++) {
-    double step = (w[i] / totalw) * span / insert_count_per_step;
-    for(unsigned int j = 0; j < insert_count_per_step; j++) {
-      last_inserted += step;
-      m_knotVector.push_back(last_inserted);
-    }
+  unsigned int insert_count = m_controlPoints.size() + m_degree + 1;
+  double step = (m_b - m_a) / (insert_count - 1);
+  for(unsigned int i = 0; i < insert_count - 1; i++) {
+    m_knotVector.push_back(m_a + i * step);
   }
+  m_knotVector.push_back(m_b); // seperated for numerical reasons
+}
 
-  unsigned int left_to_insert = insert_count - (w.size() - 1) * insert_count_per_step;
-  double step = (w[w.size()-1] / totalw) * span / left_to_insert;
-  for(unsigned int j = 0; j < left_to_insert; j++) {
-    last_inserted += step;
-    m_knotVector.push_back(last_inserted);
-  }
-  m_knotVector.insert(m_knotVector.end(), m_degree+1, m_b);
+void splx::BSpline::generateNonclampedNonuniformKnotVector(const std::vector<double>& w) {
+  m_knotVector.clear();
 }
 
 void splx::BSpline::printKnotVector() const {
@@ -85,26 +74,19 @@ void splx::BSpline::printKnotVectorNumbered() const {
 unsigned int splx::BSpline::findSpan(double u) const {
   assert(u >= m_a && u <= m_b);
 
-  if(u == m_b) { // special cases
-    return m_controlPoints.size() - 1;
-  }
-
-  unsigned int lo = 0;
-  unsigned int hi = m_knotVector.size() - 1;
-  unsigned int mid = (lo + hi) / 2;
-
-  while(u < m_knotVector[mid] || u >= m_knotVector[mid+1]) {
-    if(u < m_knotVector[mid]) {
-      hi = mid;
-    } else {
-      lo = mid+1;
+  if(u == m_b) {
+    unsigned int idx = m_knotVector.size() - 1;
+    while(m_knotVector[idx] == u) {
+      idx--;
     }
-    mid = (hi + lo) / 2;
+    return idx;
   }
-  return mid;
+  auto it = std::upper_bound(m_knotVector.begin(), m_knotVector.end(), u);
+  return it - m_knotVector.begin() - 1;
 }
 
 std::vector<double> splx::BSpline::evalBasisFuncs(double u, unsigned int deg, unsigned int k, unsigned int from, unsigned int to) const {
+  //cout << "evaluating for u = " << u << endl;
   if(from > to) {
     return std::vector<double>();
   }
@@ -117,13 +99,16 @@ std::vector<double> splx::BSpline::evalBasisFuncs(double u, unsigned int deg, un
   N[0].resize(to + deg - from + 1, 0.0);
   N[1].resize(to + deg - from + 1, 0.0);
 
+  unsigned int end_span = findSpan(m_b);
 
   for(unsigned int j = from; j <= to + deg; j++) {
-    N[0][j - from] = (u >= m_knotVector[j] && u < m_knotVector[j+1] ? 1 : 0);
-    if(u == m_b && j == m_controlPoints.size() - 1) {
+    N[0][j - from] = (u >= m_knotVector[j] && u < m_knotVector[j+1] ? 1.0 : 0.0);
+    if(u == m_b && j == end_span) {
       N[0][j - from] = 1.0;
     }
+    //cout << N[0][j - from] << endl;
   }
+  //int a; cin >> a;
 
   for(unsigned int p = 1; p <= deg - k; p++) {
     int i = p & 0x1;
@@ -132,7 +117,9 @@ std::vector<double> splx::BSpline::evalBasisFuncs(double u, unsigned int deg, un
       N[i][j-from] =
         (N[pi][j-from] == 0.0 ? 0.0 : N[pi][j-from] * (u - m_knotVector[j]) / (m_knotVector[j+p] - m_knotVector[j]))
       + (N[pi][j-from+1] == 0.0 ? 0.0 : N[pi][j-from+1] * (m_knotVector[j+p+1] - u) / (m_knotVector[j+p+1] - m_knotVector[j+1]));
+      //cout << N[i][j-from] << endl;
     }
+    //cin >> a;
   }
 
   for(unsigned int  p = deg - k + 1; p <= deg; p++) {
@@ -157,10 +144,11 @@ splx::Vec splx::BSpline::eval(double u, unsigned int k) const {
   }
 
   unsigned int je = findSpan(u);
+  unsigned int js = je < m_degree ? 0 : je - m_degree;
 
-  std::vector<double> N = evalBasisFuncs(u, m_degree, k, je - m_degree, je);
+  std::vector<double> N = evalBasisFuncs(u, m_degree, k, js, je);
 
-  for(unsigned int j = je - m_degree; j <= je; j++) {
+  for(unsigned int j = js; j <= je; j++) {
     result += m_controlPoints[j] * N[j - je + m_degree];
   }
 
@@ -214,7 +202,7 @@ void splx::BSpline::extendQPIntegratedSquaredDerivative(QPMatrices& QP, unsigned
   }
 
 
-  for(unsigned int j = m_degree; j < m_controlPoints.size(); j++) {
+  for(unsigned int j = 0; j < m_knotVector.size() - 1; j++) {
     // integrate from m_knotVector[j] to m_knotVector[j+1]
     Matrix M = getBasisCoefficientMatrix(j - m_degree, j, m_degree, j).transpose();
     Matrix Mext(m_degree+1, m_controlPoints.size());
@@ -246,12 +234,13 @@ void splx::BSpline::extendQPPositionAt(QPMatrices& QP, double u, const splx::Vec
   assert(u >= m_a && u <= m_b);
   assert(pos.rows() == m_dimension);
   unsigned int je = findSpan(u);
+  unsigned int js = je < m_degree ? 0 : je - m_degree;
 
-  std::vector<double> basis = evalBasisFuncs(u, m_degree, 0, je-m_degree, je);
+  std::vector<double> basis = evalBasisFuncs(u, m_degree, 0, js, je);
   Vec Mext(m_controlPoints.size());
   for(unsigned int i = 0; i<m_controlPoints.size(); i++) {
-    if(i >= je-m_degree && i<=je) {
-      Mext(i) = basis[i-je+m_degree];
+    if(i >= js && i<=je) {
+      Mext(i) = basis[i-js];
     } else {
       Mext(i) = 0.0;
     }
@@ -311,7 +300,8 @@ splx::Matrix splx::BSpline::getBasisCoefficientMatrix(unsigned int from, unsigne
 
 splx::Vec splx::BSpline::eval_dbg(double u) const {
   unsigned int je = findSpan(u);
-  Matrix mtr = getBasisCoefficientMatrix(je-m_degree, je, m_degree, je);
+  unsigned int js = je < m_degree ? 0 : je - m_degree;
+  Matrix mtr = getBasisCoefficientMatrix(js, je, m_degree, je);
 
   Vec uvec(m_degree+1);
   double uy = 1;
@@ -327,7 +317,7 @@ splx::Vec splx::BSpline::eval_dbg(double u) const {
     res(i) = 0.0;
 
   for(unsigned int i = 0; i<m_degree+1; i++) {
-    res += basis(i) * m_controlPoints[i+je-m_degree];
+    res += basis(i) * m_controlPoints[i+js];
   }
   return res;
 }
@@ -342,16 +332,22 @@ void splx::BSpline::extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, 
   QP.ubA.conservativeResize(QP.ubA.rows() + m_dimension);
 
   unsigned int je = findSpan(m_a);
+  unsigned int js = je < m_degree ? 0 : je - m_degree;
 
-  std::vector<double> basis = evalBasisFuncs(m_a, m_degree, k, je-m_degree, je);
-
+  std::vector<double> basis = evalBasisFuncs(m_a, m_degree, k, js, je);
+/*
+  for(int i = 0; i < basis.size(); i++) {
+    cout << basis[i] << " " << endl;
+  }
+  int a; cin >> a;
+*/
   unsigned int S = m_controlPoints.size() * m_dimension;
 
 
   for(unsigned int d = 0; d < m_dimension; d++) {
     for(unsigned int m = 0; m < S; m++) {
-      if(m >= d*m_controlPoints.size()+je-m_degree && m <= d*m_controlPoints.size()+je) {
-        QP.A(ridx+d, m) = basis[m - d*m_controlPoints.size() - je + m_degree];
+      if(m >= d*m_controlPoints.size()+js && m <= d*m_controlPoints.size()+je) {
+        QP.A(ridx+d, m) = basis[m - d*m_controlPoints.size() - js];
       } else {
         QP.A(ridx+d, m) = 0.0;
       }
@@ -395,10 +391,13 @@ void splx::BSpline::extendQPHyperplaneConstraint(QPMatrices& QP, double from, do
 }
 
 std::pair<unsigned int, unsigned int> splx::BSpline::affectingPoints(double from, double to) const {
+  assert(to >= from && to <= m_b && from >= m_a);
   unsigned int js = findSpan(from);
   unsigned int je = findSpan(to);
 
-  return std::make_pair(js - m_degree, je);
+  js = js < m_degree ? 0 : js - m_degree;
+
+  return std::make_pair(js, je);
 }
 
 const splx::Vec& splx::BSpline::getCP(unsigned int k) const {

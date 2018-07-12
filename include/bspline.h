@@ -130,11 +130,19 @@ namespace splx {
 
 
     /**
-      * Generates uniform knot vector from scratch
+      * Generates uniform knot vector from scratch that is clamped
       *
       * @assumes control points are already set
     */
     void generateClampedUniformKnotVector();
+
+    /**
+      * Generates uniform knot vector from scratch that is not clamped
+      *
+      * @assumes control points are already set
+      *
+    */
+    void generateNonclampedUniformKnotVector();
 
 
     /**
@@ -145,7 +153,7 @@ namespace splx {
       * where the length of each interval i is proportional to w[i]
       * and each interval has the same number of knots.
       */
-    void generateClampedNonuniformKnotVector(const std::vector<double>& w);
+    void generateNonclampedNonuniformKnotVector(const std::vector<double>& w);
 
     /**
      * Clear control points array.
