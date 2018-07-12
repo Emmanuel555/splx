@@ -5,6 +5,7 @@
 #include <eigen3/Eigen/Dense>
 #include <cmath>
 #include <limits>
+#include <numeric>
 
 using std::cout;
 using std::endl;
@@ -23,16 +24,41 @@ splx::BSpline::BSpline(unsigned int deg, unsigned int dim, double A, double B,
   }
   m_controlPoints = cpts;
   assert(m_controlPoints.size() >= m_degree + 1);
-  generateUniformKnotVector();
+  generateClampedUniformKnotVector();
 }
 
-void splx::BSpline::generateUniformKnotVector() {
+void splx::BSpline::generateClampedUniformKnotVector() {
   m_knotVector.clear();
   m_knotVector.insert(m_knotVector.begin(), m_degree+1, m_a);
-  double insert_count = m_controlPoints.size() - m_degree - 1;
+  unsigned int insert_count = m_controlPoints.size() - m_degree - 1;
   double step = (m_b - m_a)/(insert_count+1);
   for(int i = 0; i < insert_count; i++)
     m_knotVector.push_back(m_a + (i+1)*step);
+  m_knotVector.insert(m_knotVector.end(), m_degree+1, m_b);
+}
+
+void splx::BSpline::generateClampedNonuniformKnotVector(const std::vector<double>& w) {
+  m_knotVector.clear();
+  m_knotVector.insert(m_knotVector.begin(), m_degree+1, m_a);
+  double span = m_b - m_a;
+  unsigned int insert_count = m_controlPoints.size() - m_degree - 1;
+  unsigned int insert_count_per_step = insert_count / w.size();
+  double totalw = std::accumulate(w.begin(), w.end(), 0);
+  double last_inserted = m_a;
+  for(size_t i = 0; i < w.size() - 1; i++) {
+    double step = (w[i] / totalw) * span / insert_count_per_step;
+    for(unsigned int j = 0; j < insert_count_per_step; j++) {
+      last_inserted += step;
+      m_knotVector.push_back(last_inserted);
+    }
+  }
+
+  unsigned int left_to_insert = insert_count - (w.size() - 1) * insert_count_per_step;
+  double step = (w[w.size()-1] / totalw) * span / left_to_insert;
+  for(unsigned int j = 0; j < left_to_insert; j++) {
+    last_inserted += step;
+    m_knotVector.push_back(last_inserted);
+  }
   m_knotVector.insert(m_knotVector.end(), m_degree+1, m_b);
 }
 

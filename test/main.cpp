@@ -27,7 +27,7 @@ int main() {
     cpts.push_back(vec);
 
   splx::BSpline bspl(9, 2, 0, 7.0, cpts);
-  bspl.generateUniformKnotVector();
+  bspl.generateClampedUniformKnotVector();
 
 
   splx::QPMatrices QP = bspl.getQPMatrices();
