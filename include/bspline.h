@@ -153,7 +153,7 @@ namespace splx {
       * where the length of each interval i is proportional to w[i]
       * and each interval has the same number of knots.
       */
-    void generateNonclampedNonuniformKnotVector(const std::vector<double>& w);
+    void generateClampedNonuniformKnotVector(const std::vector<double>& w);
 
     /**
      * Clear control points array.

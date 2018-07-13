@@ -24,6 +24,7 @@ splx::BSpline::BSpline(unsigned int deg, unsigned int dim, double A, double B,
     assert(cpts[i].rows() == m_dimension);
   }
   m_controlPoints = cpts;
+  generateClampedUniformKnotVector();
 }
 
 void splx::BSpline::generateClampedUniformKnotVector() {
@@ -47,8 +48,33 @@ void splx::BSpline::generateNonclampedUniformKnotVector() {
   m_knotVector.push_back(m_b); // seperated for numerical reasons
 }
 
-void splx::BSpline::generateNonclampedNonuniformKnotVector(const std::vector<double>& w) {
+void splx::BSpline::generateClampedNonuniformKnotVector(const std::vector<double>& w) {
+  assert(m_controlPoints.size() >= m_degree + 1);
   m_knotVector.clear();
+  m_knotVector.insert(m_knotVector.begin(), m_degree + 1, m_a);
+  unsigned int insert_count = m_controlPoints.size() - m_degree;
+  unsigned int insert_per_step = insert_count / w.size();
+  double totalw = std::accumulate(w.begin(), w.end(), 0.0);
+  double last_end = m_a;
+  for(size_t i = 0; i < w.size() - 1; i++) {
+    double ratio = w[i] / totalw;
+    double cur_end = last_end + (m_b - m_a) * ratio;
+    double step = (cur_end - last_end) / insert_per_step;
+    for(unsigned int j = 0; j < insert_per_step; j++) {
+      m_knotVector.push_back(last_end + step * (j+1));
+    }
+    last_end = cur_end;
+  }
+
+  /* last element is handled seperately to deal with under/overflows */
+  insert_per_step = insert_count - insert_per_step * (w.size() - 1);
+  double step = (m_b - last_end) / insert_per_step;
+  for(unsigned int j = 0; j < insert_per_step; j++) {
+    m_knotVector.push_back(last_end + step * (j+1));
+  }
+
+  m_knotVector.insert(m_knotVector.end(), m_degree, m_b);
+
 }
 
 void splx::BSpline::printKnotVector() const {

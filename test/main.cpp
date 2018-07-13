@@ -24,9 +24,6 @@ int main() {
   vec(1) = 0.0;
   int i = 50;
   while(i--) {
-    splx::Vec vec(2);
-    vec(0) = 100 - i;
-    vec(1) = 100-i;
     cpts.push_back(vec);
   }
   splx::BSpline bspl(4, 2, 0, 7.0, cpts);
@@ -123,9 +120,9 @@ int main() {
 
   std::cerr << "x optimized" << std::endl << QP.x << std::endl;
 
-  //bspl.loadControlPoints(QP);
+  bspl.loadControlPoints(QP);
 
-  for(int i=0; i < bspl.m_controlPoints.size(); i++) {
+  for(unsigned int i=0; i < bspl.m_controlPoints.size(); i++) {
     cout << "c" << endl;
     cout << bspl.m_controlPoints[i] << endl;
   }
