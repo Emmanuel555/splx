@@ -41,4 +41,11 @@ while(i<len(l)):
         raise "no"
 plt.plot(x, y)
 plt.quiver(xv, yv, dvx, dvy, width = 0.0025, angles = 'xy')
+
+#ymin, ymax = plt.ylim()
+#xmin = -ymin/2
+#xmax = -ymax/2
+#plt.plot([xmin, xmax], [ymin, ymax])
+
+
 plt.show()

@@ -77,6 +77,23 @@ void splx::BSpline::generateClampedNonuniformKnotVector(const std::vector<double
 
 }
 
+
+void splx::BSpline::generateNonclampedNonuniformKnotVector(const std::vector<double>& w) {
+  m_knotVector.clear();
+  unsigned int insert_count = m_controlPoints.size() + m_degree + 1;
+  double span = m_b - m_a;
+  double step = span / (insert_count - 1);
+  m_knotVector.push_back(m_a); // seperated for numerical issues
+  for(unsigned int i = 1; i < insert_count - 1; i++) {
+    m_knotVector.push_back(m_a + step * i);
+  }
+  m_knotVector.push_back(m_b); // seperated for numerical issues
+  std::cout << "kv size: " << m_knotVector.size() << endl;
+  int a; std::cin >> a;
+  std::cout << "cp size: " << m_controlPoints.size() << endl;
+  std::cin >> a;
+}
+
 void splx::BSpline::printKnotVector() const {
   for(size_t i = 0; i < m_knotVector.size()-1; i++) {
     std::cout << m_knotVector[i] << " ";
@@ -157,7 +174,7 @@ std::vector<double> splx::BSpline::evalBasisFuncs(double u, unsigned int deg, un
     }
   }
 
-  N[deg & 0x1].resize(to - from + 1);
+  //N[deg & 0x1].resize(to - from + 1);
   return N[deg & 0x1];
 }
 
@@ -175,7 +192,7 @@ splx::Vec splx::BSpline::eval(double u, unsigned int k) const {
   std::vector<double> N = evalBasisFuncs(u, m_degree, k, js, je);
 
   for(unsigned int j = js; j <= je; j++) {
-    result += m_controlPoints[j] * N[j - je + m_degree];
+    result += m_controlPoints[j] * N[j - js];
   }
 
   return result;
@@ -230,12 +247,15 @@ void splx::BSpline::extendQPIntegratedSquaredDerivative(QPMatrices& QP, unsigned
 
   for(unsigned int j = 0; j < m_knotVector.size() - 1; j++) {
     // integrate from m_knotVector[j] to m_knotVector[j+1]
-    Matrix M = getBasisCoefficientMatrix(j - m_degree, j, m_degree, j).transpose();
+    if(m_knotVector[j] == m_knotVector[j+1])
+      continue;
+    unsigned int js = j < m_degree ? 0U : j - m_degree;
+    Matrix M = getBasisCoefficientMatrix(js, j, m_degree, j).transpose();
     Matrix Mext(m_degree+1, m_controlPoints.size());
     for(unsigned int m = 0; m <= m_degree; m++) {
       for(unsigned int n = 0; n < m_controlPoints.size(); n++) {
-        if(n >= j - m_degree && n <= j) {
-          Mext(m, n) = M(m, n-j+m_degree);
+        if(n >= js && n <= j) {
+          Mext(m, n) = M(m, n-js);
         } else {
           Mext(m, n) = 0.0;
         }
@@ -322,7 +342,6 @@ splx::Matrix splx::BSpline::getBasisCoefficientMatrix(unsigned int from, unsigne
 
   return result;
 }
-
 
 splx::Vec splx::BSpline::eval_dbg(double u) const {
   unsigned int je = findSpan(u);

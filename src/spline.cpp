@@ -22,7 +22,7 @@ unsigned int splx::Spline::comb(unsigned int n, unsigned int k) const {
 
 
 unsigned int splx::Spline::perm(unsigned int n, unsigned int k) const {
-  return comb(n, k) * fac(k);
+  return fac(n) / fac(n-k);
 }
 
 

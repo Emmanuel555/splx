@@ -146,6 +146,16 @@ namespace splx {
 
 
     /**
+     * Generates non uniform non clamped knot vector from scratch
+     * according to given weights w.
+     *
+     * divites total span to |w| number of intervals
+     * where the lengths of each interval i is proportional to w[i]
+     * and each interval has the same number of knots
+    */
+    void generateNonclampedNonuniformKnotVector(const std::vector<double>& w);
+
+    /**
       * Generates non uniform knot vector from scratch
       * according to given weights w.
       *
@@ -208,6 +218,7 @@ namespace splx {
      * a0 + a1u + a2u^2 + ... + apu^p
     */
     Matrix getBasisCoefficientMatrix(unsigned int from, unsigned int to, unsigned int p, unsigned int i) const;
+
   };
 
 }

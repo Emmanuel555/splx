@@ -22,12 +22,12 @@ int main() {
   splx::Vec vec(2);
   vec(0) = 0.0;
   vec(1) = 0.0;
-  int i = 50;
+  int i = 5;
   while(i--) {
     cpts.push_back(vec);
   }
-  splx::BSpline bspl(4, 2, 0, 7.0, cpts);
-  bspl.generateNonclampedUniformKnotVector();
+  splx::BSpline bspl(2, 2, 0, 7.0, cpts);
+  bspl.generateClampedUniformKnotVector();
   //bspl.printKnotVectorNumbered();
 
 
@@ -36,10 +36,10 @@ int main() {
   //bspl.printKnotVector();
 
   bspl.extendQPIntegratedSquaredDerivative(QP, 1, 100.0);
-  bspl.extendQPIntegratedSquaredDerivative(QP, 2, 0.5);
+  //bspl.extendQPIntegratedSquaredDerivative(QP, 2, 0.5);
   vec(0) = -7.0;
   vec(1) = -7.0;
-  bspl.extendQPBeginningConstraint(QP, 0, vec);
+  //bspl.extendQPBeginningConstraint(QP, 0, vec);
   vec(0) = 3;
   vec(1) = 3;
   //bspl.extendQPBeginningConstraint(QP, 1, vec);
@@ -52,14 +52,14 @@ int main() {
   bspl.extendQPPositionAt(QP, 3.0, vec, 50.0);
   vec(0) = 10.0;
   vec(1) = 2.0;
-  bspl.extendQPPositionAt(QP, 4.0, vec, 100.0);
+  //bspl.extendQPPositionAt(QP, 4.0, vec, 100.0);
 
   vec(0) = -3.5;
   vec(1) = -3.5;
   bspl.extendQPPositionAt(QP, 6.0, vec, 50.0);
   vec(0) = -8.5;
   vec(1) = -8.5;
-  bspl.extendQPPositionAt(QP, 7.0, vec, 1000.0);
+  //bspl.extendQPPositionAt(QP, 7.0, vec, 1000.0);
   bspl.extendQPDecisionConstraint(QP, -10, 10);
 
   splx::Hyperplane hp(2);
@@ -87,24 +87,35 @@ int main() {
   std::cerr << "lbA" << std::endl << QP.lbA << std::endl << std::endl;
   std::cerr << "ubA" << std::endl << QP.ubA << std::endl << std::endl;
   std::cerr << "x" << std::endl << QP.x << std::endl << std::endl;
-  Eigen::LLT<Eigen::MatrixXd> lltofH(QP.H);
+  Eigen::LLT<splx::Matrix> lltofH(QP.H);
   if(lltofH.info() == Eigen::NumericalIssue)
     std::cerr << "non psd" << endl;
   else
     std::cerr << "psd" << std::endl;
 
+    int a; std::cin >> a;
 
+
+
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> H = QP.H.cast<double>();
+  Eigen::Matrix<double, Eigen::Dynamic, 1> g = QP.g.cast<double>();
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A = QP.A.cast<double>();
+  Eigen::Matrix<double, Eigen::Dynamic, 1> lbX = QP.lbX.cast<double>();
+  Eigen::Matrix<double, Eigen::Dynamic, 1> ubX = QP.ubX.cast<double>();
+  Eigen::Matrix<double, Eigen::Dynamic, 1> lbA = QP.lbA.cast<double>();
+  Eigen::Matrix<double, Eigen::Dynamic, 1> ubA = QP.ubA.cast<double>();
+  Eigen::Matrix<double, Eigen::Dynamic, 1> x = QP.x.cast<double>();
   qpOASES::returnValue status = qp.init(
-    QP.H.data(),
-    QP.g.data(),
-    QP.A.data(),
-    QP.lbX.data(),
-    QP.ubX.data(),
-    QP.lbA.data(),
-    QP.ubA.data(),
+    H.data(),
+    g.data(),
+    A.data(),
+    lbX.data(),
+    ubX.data(),
+    lbA.data(),
+    ubA.data(),
     nWSR,
     NULL,
-    QP.x.data());
+    x.data());
 
   qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
 
@@ -116,7 +127,9 @@ int main() {
 
   //std::cerr << "status: " << simpleStatus << std::endl;
 
-  qp.getPrimalSolution(QP.x.data());
+  qp.getPrimalSolution(x.data());
+
+  QP.x = x;
 
   std::cerr << "x optimized" << std::endl << QP.x << std::endl;
 
