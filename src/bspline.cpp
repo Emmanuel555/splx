@@ -421,7 +421,7 @@ void splx::BSpline::extendQPHyperplaneConstraint(QPMatrices& QP, unsigned int fr
       QP.A(ridx + i - from, d*m_controlPoints.size() + i) = hp.normal()(d);
     }
     QP.lbA(ridx + i - from) = std::numeric_limits<double>::lowest();
-    QP.ubA(ridx + i - from) = hp.offset();
+    QP.ubA(ridx + i - from) = -hp.offset();
   }
 }
 
@@ -482,18 +482,5 @@ void splx::BSpline::extendQPDecisionConstraint(QPMatrices& QP, double lb, double
   for(unsigned int i=0; i < QP.lbX.rows(); i++) {
     QP.lbX(i) = lb;
     QP.ubX(i) = ub;
-  }
-}
-
-void splx::BSpline::extendQPHyperplanePenalty(QPMatrices& QP, unsigned int from, unsigned int to, const Hyperplane& hp, double alpha) const {
-  assert(hp.normal().rows() == m_dimension);
-  assert(to >= from);
-  assert(to < m_controlPoints.size());
-  const Vec& normal = hp.normal();
-  const double dist = hp.offset();
-  for(unsigned int i = from; i <= to; i++) {
-    for(unsigned int d = 0; d < m_dimension; d++) {
-      QP.g(d * m_controlPoints.size() + i) += alpha * normal(d);
-    }
   }
 }
