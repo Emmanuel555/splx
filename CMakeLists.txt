@@ -14,11 +14,13 @@ include_directories(
   ${QPOASES_INCLUDE_DIR}
 )
 
-add_library(
-splx
-src/spline.cpp
-src/bspline.cpp
+
+add_executable(
+splxtest
+test/main.cpp
 )
 
-add_executable(splxtest test/main.cpp)
-target_link_libraries(splxtest splx qpOASES)
+target_link_libraries(
+splxtest
+qpOASES
+)
