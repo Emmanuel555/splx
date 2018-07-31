@@ -1,10 +1,12 @@
 #ifndef SPLX_BSPLINE_H
 #define SPLX_BSPLINE_H
-#include <eigen3/Eigen/Dense>
-#include <eigen3/Eigen/Geometry>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include <vector>
 #include "spline.h"
 #include <utility>
+#include <numeric>
+#include <iostream>
 
 namespace splx {
 
