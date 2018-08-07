@@ -16,11 +16,31 @@ include_directories(
 
 
 add_executable(
-splxtest
-test/main.cpp
+bsplinetest
+test/testbspline.cpp
 )
 
 target_link_libraries(
-splxtest
+bsplinetest
+qpOASES
+)
+
+add_executable(
+beziertest
+test/testbezier.cpp
+)
+
+target_link_libraries(
+beziertest
+qpOASES
+)
+
+add_executable(
+splinetest
+test/testspline.cpp
+)
+
+target_link_libraries(
+splinetest
 qpOASES
 )

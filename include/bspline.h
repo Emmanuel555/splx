@@ -3,22 +3,24 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <vector>
-#include "spline.h"
+#include "curve.h"
 #include <utility>
 #include <numeric>
 #include <iostream>
+#include <Eigen/StdVector>
 
 namespace splx {
 
 template<typename T, unsigned int DIM>
-class BSpline : public Spline<T, DIM> {
+class BSpline : public Curve<T, DIM> {
 public:
 
-  using Vector = typename Spline<T, DIM>::Vector;
-  using Hyperplane = typename Spline<T, DIM>::Hyperplane;
-  using Matrix = typename Spline<T, DIM>::Matrix;
-  using VectorDIM = typename Spline<T, DIM>::VectorDIM;
-  using QPMatrices = typename Spline<T, DIM>::QPMatrices;
+  using Vector = typename Curve<T, DIM>::Vector;
+  using Hyperplane = typename Curve<T, DIM>::Hyperplane;
+  using Matrix = typename Curve<T, DIM>::Matrix;
+  using VectorDIM = typename Curve<T, DIM>::VectorDIM;
+  using QPMatrices = typename Curve<T, DIM>::QPMatrices;
+  using Row = typename Curve<T, DIM>::Row;
 
   /**
    * Construct a b-spline where basis functions are of
@@ -26,8 +28,10 @@ public:
    *
    * @fails if A > B
   */
-  BSpline(unsigned int deg, T A, T B): m_degree(deg), m_a(A), m_b(B) {
-    assert(m_a <= m_b);
+  BSpline(unsigned int deg, T A): Curve<T, DIM>(Curve<T, DIM>::CurveType::BSPLINE),
+                                    m_degree(deg), m_a(A)
+                                        {
+    assert(A > 0);
   }
 
   /**
@@ -39,20 +43,21 @@ public:
    * @fails if the size of m_controlPoints is less than m_degree+1
   */
   BSpline(unsigned int deg, T A,
-          T B, const std::vector<VectorDIM>& cpts) : m_controlPoints(cpts),
-          m_degree(deg), m_a(A), m_b(B) {
-    assert(m_a <= m_b);
+     const std::vector<VectorDIM, Eigen::aligned_allocator<VectorDIM> >& cpts) : Curve<T, DIM>(Curve<T, DIM>::CurveType::BSPLINE),
+                                            m_degree(deg), m_a(A), m_controlPoints(cpts)
+                                           {
+    assert(A > 0);
     generateClampedUniformKnotVector();
   }
 
 
   /**
-    * Evaluates the k^{th} derivative of the spline at u \in [0,1]
+    * Evaluates the k^{th} derivative of the curve at u \in [0, m_a]
     *
-    * @fails if u is not in [m_a, m_b]
+    * @fails if u is not in [0, m_a]
   */
   VectorDIM eval(T u, unsigned int k) const override {
-    assert(u >= m_a && u <= m_b);
+    assert(u >= 0 && u <= m_a);
     VectorDIM result;
     for(unsigned int i = 0; i < DIM; i++) {
       result(i) = 0.0;
@@ -83,8 +88,9 @@ public:
     QP.g.resize(S);
     for(unsigned int i = 0; i < S; i++) {
       QP.g(i) = 0.0;
-      for(unsigned int j = 0; j < S; j++)
+      for(unsigned int j = 0; j < S; j++) {
         QP.H(i, j) = 0.0;
+      }
     }
     QP.A.resize(0, S);
     QP.lbA.resize(0);
@@ -108,13 +114,13 @@ public:
 
 
   /**
-   * Add integral from m_a to m_b of square of norm of k^th derivative of the spline
+   * Add integral from 0 to m_a of square of norm of k^th derivative of the curve
    * to the hessian matrix H with scalar lambda
    *
    * order of variables is assumed to be
    * p0x, p1x, p2x, ..., pnx, p0y, p1y, ..., pny, ...
   */
-  void extendQPIntegratedSquaredDerivative(QPMatrices& QP, unsigned int k, T lambda) const {
+  void extendQPIntegratedSquaredDerivative(QPMatrices& QP, unsigned int k, T lambda) const override {
     if(k > m_degree)
       return;
 
@@ -124,7 +130,7 @@ public:
         D(m, n) = 0.0;
       }
       if(m <= m_degree-k) {
-        D(m, m+k) = Spline<T, DIM>::perm(m+k, k);
+        D(m, m+k) = Curve<T, DIM>::perm(m+k, k);
       }
     }
 
@@ -166,8 +172,8 @@ public:
    * p0x, p1x, p2x, ..., pnx, p0y, p1y, ..., pny, ...
   */
 
-  void extendQPPositionAt(QPMatrices& QP, T u, const VectorDIM& pos, T theta) const {
-    assert(u >= m_a && u <= m_b);
+  void extendQPPositionAt(QPMatrices& QP, T u, const VectorDIM& pos, T theta) const override {
+    assert(u >= 0 && u <= m_a);
     unsigned int je = findSpan(u);
     unsigned int js = je < m_degree ? 0 : je - m_degree;
 
@@ -191,25 +197,20 @@ public:
   }
 
   /**
-   * Add constraint that requires the k^th derivative of spline at u=0 to be target.
+   * Add constraint that requires the k^th derivative of curve at u=0 to be target.
   */
-  void extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, const VectorDIM& target) const {
+  void extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, const VectorDIM& target) const override {
     assert(k <= m_degree);
     unsigned int ridx = QP.A.rows();
     QP.A.conservativeResize(QP.A.rows() + DIM, QP.A.cols());
     QP.lbA.conservativeResize(QP.lbA.rows() + DIM);
     QP.ubA.conservativeResize(QP.ubA.rows() + DIM);
 
-    unsigned int je = findSpan(m_a);
+    unsigned int je = findSpan(0);
     unsigned int js = je < m_degree ? 0 : je - m_degree;
 
-    std::vector<T> basis = evalBasisFuncs(m_a, m_degree, k, js, je);
-  /*
-    for(int i = 0; i < basis.size(); i++) {
-      cout << basis[i] << " " << endl;
-    }
-    int a; cin >> a;
-  */
+    std::vector<T> basis = evalBasisFuncs(0, m_degree, k, js, je);
+
     unsigned int S = m_controlPoints.size() * DIM;
 
 
@@ -253,6 +254,13 @@ public:
     }
   }
 
+  /*
+   * Same as above but all points.
+  */
+  void extendQPHyperplaneConstraint(QPMatrices& QP, const Hyperplane& hp) const override {
+    extendQPHyperplaneConstraint(QP, 0U, (unsigned int) m_controlPoints.size() - 1U, hp);
+  }
+
   /**
    * Add constraint that requires curve to be on the negative side of hp
    * when from <= u <= to
@@ -261,8 +269,8 @@ public:
    * in the negative side of the hp.
   */
   void extendQPHyperplaneConstraint(QPMatrices& QP, T from, T to, const Hyperplane& hp) const {
-    assert(from >= m_a && from <= m_b);
-    assert(to >= m_a && to <= m_b);
+    assert(from >= 0 && from <= m_a);
+    assert(to >= 0 && to <= m_a);
 
     auto aff = affectingPoints(from, to);
 
@@ -274,18 +282,37 @@ public:
    *
    * Effectively, it constraints the curve to be inside a box.
   */
-  void extendQPDecisionConstraint(QPMatrices&QP, T lb, T ub) const {
+  void extendQPDecisionConstraint(QPMatrices&QP, T lb, T ub) const override {
     for(unsigned int i=0; i < QP.lbX.rows(); i++) {
       QP.lbX(i) = lb;
       QP.ubX(i) = ub;
     }
   }
+
+  Row getQPBasisRow(T u, unsigned int k) const override {
+    assert(u >= 0 && u <= m_a);
+    unsigned int je = findSpan(u);
+    unsigned int js = je < m_degree ? 0 : je - m_degree;
+
+    std::vector<T> basis = evalBasisFuncs(u, m_degree, k, js, je);
+    Row Mext(m_controlPoints.size());
+    for(unsigned int i = 0; i<m_controlPoints.size(); i++) {
+      if(i >= js && i<=je) {
+        Mext(i) = basis[i-js];
+      } else {
+        Mext(i) = 0.0;
+      }
+    }
+
+    return Mext;
+  }
+
   /*
    * returns the inclusive index range of points that effects the curve
    * from u = from to u = to.
   */
   std::pair<unsigned int, unsigned int> affectingPoints(T from, T to) const {
-    assert(to >= from && to <= m_b && from >= m_a);
+    assert(to >= from && to <= m_a && from >= 0);
     unsigned int js = findSpan(from);
     unsigned int je = findSpan(to);
 
@@ -335,12 +362,12 @@ public:
   void generateClampedUniformKnotVector() {
     assert(m_controlPoints.size() >= m_degree + 1);
     m_knotVector.clear();
-    m_knotVector.insert(m_knotVector.begin(), m_degree+1, m_a);
+    m_knotVector.insert(m_knotVector.begin(), m_degree+1, 0);
     unsigned int insert_count = m_controlPoints.size() - m_degree - 1;
-    T step = (m_b - m_a)/(insert_count+1);
-    for(int i = 0; i < insert_count; i++)
-      m_knotVector.push_back(m_a + (i+1)*step);
-    m_knotVector.insert(m_knotVector.end(), m_degree+1, m_b);
+    T step = m_a/(insert_count+1);
+    for(unsigned int i = 0; i < insert_count; i++)
+      m_knotVector.push_back((i+1)*step);
+    m_knotVector.insert(m_knotVector.end(), m_degree+1, m_a);
   }
 
   /**
@@ -352,11 +379,11 @@ public:
   void generateNonclampedUniformKnotVector() {
     m_knotVector.clear();
     unsigned int insert_count = m_controlPoints.size() + m_degree + 1;
-    T step = (m_b - m_a) / (insert_count - 1);
+    T step = m_a / (insert_count - 1);
     for(unsigned int i = 0; i < insert_count - 1; i++) {
-      m_knotVector.push_back(m_a + i * step);
+      m_knotVector.push_back(i * step);
     }
-    m_knotVector.push_back(m_b); // seperated for numerical reasons
+    m_knotVector.push_back(m_a); // seperated for numerical reasons
   }
 
 
@@ -371,13 +398,12 @@ public:
   void generateNonclampedNonuniformKnotVector(const std::vector<T>& w) {
     m_knotVector.clear();
     unsigned int insert_count = m_controlPoints.size() + m_degree + 1;
-    T span = m_b - m_a;
-    T step = span / (insert_count - 1);
-    m_knotVector.push_back(m_a); // seperated for numerical issues
+    T step = m_a / (insert_count - 1);
+    m_knotVector.push_back(0); // seperated for numerical issues
     for(unsigned int i = 1; i < insert_count - 1; i++) {
-      m_knotVector.push_back(m_a + step * i);
+      m_knotVector.push_back(step * i);
     }
-    m_knotVector.push_back(m_b); // seperated for numerical issues
+    m_knotVector.push_back(m_a); // seperated for numerical issues
   }
 
   /**
@@ -391,14 +417,14 @@ public:
   void generateClampedNonuniformKnotVector(const std::vector<T>& w) {
     assert(m_controlPoints.size() >= m_degree + 1);
     m_knotVector.clear();
-    m_knotVector.insert(m_knotVector.begin(), m_degree + 1, m_a);
+    m_knotVector.insert(m_knotVector.begin(), m_degree + 1, 0);
     unsigned int insert_count = m_controlPoints.size() - m_degree;
     unsigned int insert_per_step = insert_count / w.size();
     T totalw = std::accumulate(w.begin(), w.end(), 0.0);
-    T last_end = m_a;
+    T last_end = 0;
     for(size_t i = 0; i < w.size() - 1; i++) {
       T ratio = w[i] / totalw;
-      T cur_end = last_end + (m_b - m_a) * ratio;
+      T cur_end = last_end + (m_a) * ratio;
       T step = (cur_end - last_end) / insert_per_step;
       for(unsigned int j = 0; j < insert_per_step; j++) {
         m_knotVector.push_back(last_end + step * (j+1));
@@ -408,12 +434,12 @@ public:
 
     /* last element is handled seperately to deal with under/overflows */
     insert_per_step = insert_count - insert_per_step * (w.size() - 1);
-    T step = (m_b - last_end) / insert_per_step;
+    T step = (m_a - last_end) / insert_per_step;
     for(unsigned int j = 0; j < insert_per_step; j++) {
       m_knotVector.push_back(last_end + step * (j+1));
     }
 
-    m_knotVector.insert(m_knotVector.end(), m_degree, m_b);
+    m_knotVector.insert(m_knotVector.end(), m_degree, m_a);
   }
 
   /**
@@ -426,7 +452,7 @@ public:
   /**
    * Load control points from QP.x
   */
-  void loadControlPoints(const QPMatrices& QP) {
+  void loadControlPoints(const QPMatrices& QP) override {
     for(unsigned int i = 0; i < m_controlPoints.size(); i++) {
       for(unsigned int d = 0; d < DIM; d++) {
         m_controlPoints[i](d) = QP.x(d * m_controlPoints.size() + i);
@@ -480,16 +506,18 @@ public:
   }
 
 
+  inline T parameterSpan() const override {
+    return m_a;
+  }
+
+
   unsigned int m_degree; // degree of basis functions
-  T m_a; // first p+1 knot values
-  T m_b; // last p+1 knot values
-  std::vector<VectorDIM> m_controlPoints; // control points
+  T m_a; // parameter span [0, m_a]
+  std::vector<VectorDIM, Eigen::aligned_allocator<VectorDIM> > m_controlPoints; // control points
+
+
 
 private:
-  /**
-    dimension that spline is defined in,
-    defines the dimension of control points as well.
-  */
   std::vector<T> m_knotVector; // knot vector
 
 
@@ -499,9 +527,9 @@ private:
     * @fails if u not in [0,1]
   */
   unsigned int findSpan(T u) const {
-    assert(u >= m_a && u <= m_b);
+    assert(u >= 0 && u <= m_a);
 
-    if(u == m_b) {
+    if(u == m_a) {
       unsigned int idx = m_knotVector.size() - 1;
       while(m_knotVector[idx] == u) {
         idx--;
@@ -516,7 +544,6 @@ private:
    * Evaluate k^th derivative of basis functions [N_{from,deg}, ..., N_{to,deg}] at u.
   */
   std::vector<T> evalBasisFuncs(T u, unsigned int deg, unsigned int k, unsigned int from, unsigned int to) const {
-    //cout << "evaluating for u = " << u << endl;
     if(from > to) {
       return std::vector<T>();
     }
@@ -529,16 +556,14 @@ private:
     N[0].resize(to + deg - from + 1, 0.0);
     N[1].resize(to + deg - from + 1, 0.0);
 
-    unsigned int end_span = findSpan(m_b);
+    unsigned int end_span = findSpan(m_a);
 
     for(unsigned int j = from; j <= to + deg; j++) {
       N[0][j - from] = (u >= m_knotVector[j] && u < m_knotVector[j+1] ? 1.0 : 0.0);
-      if(u == m_b && j == end_span) {
+      if(u == m_a && j == end_span) {
         N[0][j - from] = 1.0;
       }
-      //cout << N[0][j - from] << endl;
     }
-    //int a; cin >> a;
 
     for(unsigned int p = 1; p <= deg - k; p++) {
       int i = p & 0x1;
@@ -547,9 +572,7 @@ private:
         N[i][j-from] =
           (N[pi][j-from] == 0.0 ? 0.0 : N[pi][j-from] * (u - m_knotVector[j]) / (m_knotVector[j+p] - m_knotVector[j]))
         + (N[pi][j-from+1] == 0.0 ? 0.0 : N[pi][j-from+1] * (m_knotVector[j+p+1] - u) / (m_knotVector[j+p+1] - m_knotVector[j+1]));
-        //cout << N[i][j-from] << endl;
       }
-      //cin >> a;
     }
 
     for(unsigned int  p = deg - k + 1; p <= deg; p++) {
@@ -561,7 +584,7 @@ private:
       }
     }
 
-    //N[deg & 0x1].resize(to - from + 1);
+    N[deg & 0x1].resize(to - from + 1);
     return N[deg & 0x1];
   }
 
@@ -612,6 +635,7 @@ private:
 
     return result;
   }
+
 
 };
 

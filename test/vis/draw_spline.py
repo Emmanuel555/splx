@@ -40,6 +40,7 @@ while(i<len(l)):
     else:
         raise "no"
 plt.plot(x, y)
+plt.plot(x, y, marker='o', ms=2)
 plt.quiver(xv, yv, dvx, dvy, width = 0.0025, angles = 'xy')
 
 #ymin, ymax = plt.ylim()

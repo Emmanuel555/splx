@@ -7,6 +7,7 @@
 #include <chrono>
 #include <qpOASES.hpp>
 #include <Eigen/Cholesky>
+#include <Eigen/StdVector>
 
 using std::cout;
 using std::endl;
@@ -14,11 +15,11 @@ using std::endl;
 int main() {
   using namespace splx;
 
-  std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
-  std::uniform_real_distribution<double> distribution(-10, 10);
-  auto rand = std::bind(distribution, generator);
+  //std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
+  //std::uniform_real_distribution<double> distribution(-10, 10);
+  //auto rand = std::bind(distribution, generator);
 
-  std::vector<BSpline<double, 2>::VectorDIM> cpts;
+  std::vector<BSpline<double, 2>::VectorDIM, Eigen::aligned_allocator<BSpline<double, 2>::VectorDIM> > cpts;
 
 
   BSpline<double, 2>::VectorDIM vec;
@@ -28,7 +29,7 @@ int main() {
   while(i--) {
     cpts.push_back(vec);
   }
-  BSpline<double, 2> bspl(4, 0, 7.0, cpts);
+  BSpline<double, 2> bspl(4, 7.0, cpts);
   bspl.generateClampedUniformKnotVector();
   //bspl.printKnotVectorNumbered();
 
@@ -38,8 +39,8 @@ int main() {
   //bspl.printKnotVector();
 
   bspl.extendQPIntegratedSquaredDerivative(QP, 1, 100.0);
-  bspl.extendQPIntegratedSquaredDerivative(QP, 2, 15.5);
-  vec(0) = 7.0;
+  //bspl.extendQPIntegratedSquaredDerivative(QP, 2, 15.5);
+  vec(0) = -2.0;
   vec(1) = -2.0;
   bspl.extendQPBeginningConstraint(QP, 0, vec);
   vec(0) = 3;
@@ -54,22 +55,22 @@ int main() {
   bspl.extendQPPositionAt(QP, 3.0, vec, 50.0);
   vec(0) = -3.0;
   vec(1) = 15.0;
-  bspl.extendQPPositionAt(QP, 4.0, vec, 1000000.0);
+  bspl.extendQPPositionAt(QP, 4.0, vec, 100.0);
 
   vec(0) = -3.5;
   vec(1) = -3.5;
   bspl.extendQPPositionAt(QP, 6.0, vec, 50.0);
-  vec(0) = -8.5;
-  vec(1) = -8.5;
+  vec(0) = 10;
+  vec(1) = 20;
   bspl.extendQPPositionAt(QP, 7.0, vec, 10000.0);
-  bspl.extendQPDecisionConstraint(QP, -10, 10);
+  bspl.extendQPDecisionConstraint(QP, -100, 100);
 
   BSpline<double, 2>::Hyperplane hp(2);
-  hp.normal()(0) = 2;
+  hp.normal()(0) = 1;
   hp.normal()(1) = 1;
   hp.offset() = 0;
 
-  //bspl.extendQPHyperplaneConstraint(QP, 5U, 25U, hp);
+  bspl.extendQPHyperplaneConstraint(QP, hp);
 
 
   qpOASES::QProblem qp(QP.x.rows(), QP.A.rows(), qpOASES::HST_SEMIDEF);
@@ -90,12 +91,12 @@ int main() {
   std::cerr << "ubA" << std::endl << QP.ubA << std::endl << std::endl;
   std::cerr << "x" << std::endl << QP.x << std::endl << std::endl;
   Eigen::LLT<BSpline<double, 2>::Matrix> lltofH(QP.H);
-  if(lltofH.info() == Eigen::NumericalIssue)
+  if(lltofH.info() == Eigen::NumericalIssue) {
     std::cerr << "non psd" << endl;
-  else
+  } else {
     std::cerr << "psd" << std::endl;
-
-    int a; std::cin >> a;
+  }
+  int a; std::cin >> a;
 
 
 
@@ -143,7 +144,7 @@ int main() {
   }
 
 
-  for(double t = bspl.m_a; t<bspl.m_b; t+=0.01) {
+  for(double t = 0; t<bspl.m_a; t+=0.01) {
     cout << "d" << endl;
     cout << bspl.eval(t, 0) << endl;
     if((i++) % 50 == 0) {
@@ -152,8 +153,8 @@ int main() {
     }
   }
   cout << "d" << endl;
-  cout << bspl.eval(bspl.m_b, 0) << endl;
+  cout << bspl.eval(bspl.m_a, 0) << endl;
   cout << "v" << endl;
-  cout << bspl.eval(bspl.m_b, 1) << endl;
+  cout << bspl.eval(bspl.m_a, 1) << endl;
   return 0;
 }
