@@ -19,6 +19,7 @@ class Spline {
     using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
     using Hyperplane = Eigen::Hyperplane<T, DIM>;
     using MatrixDIM = Eigen::Matrix<T, DIM, DIM, Eigen::RowMajor>;
+    using AlignedBox = Eigen::AlignedBox<T, DIM>;
 
     using QPMatrices = typename Curve<T, DIM>::QPMatrices;
 
@@ -249,6 +250,26 @@ class Spline {
         start += varcount;
       }
 
+    }
+
+    /*
+    * Returns true if the spline is inside of the aligned box at any point from
+    * parameter from to parameter to
+    */
+    bool intersects(const AlignedBox& box, T from, T to, T radius) const {
+      const T step = 0.01;
+      VectorDIM rad(radius, radius, radius);
+      for(T t = from; t <= to; t += step) {
+        auto& info = curveInfo(t);
+        unsigned int i = info.first;
+        T u = info.second;
+        VectorDIM pos = m_pieces[i]->eval(u, 0);
+        AlignedBox robot_box(pos - rad, pos + rad);
+        if(box.intersects(robot_box)) {
+          return true;
+        }
+      }
+      return false;
     }
 
   private:

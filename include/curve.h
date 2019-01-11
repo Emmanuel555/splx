@@ -52,6 +52,7 @@ public:
   using Hyperplane = Eigen::Hyperplane<T, DIM>;
   using MatrixDIM = Eigen::Matrix<T, DIM, DIM, Eigen::RowMajor>;
   using Row = Eigen::Matrix<T, 1, Eigen::Dynamic>;
+  using AlignedBox = Eigen::AlignedBox<T, DIM>;
 
   /**
   * QP is assumed to be formulated as 1/2x^THx + x^Tg
@@ -73,7 +74,7 @@ public:
   /**
    * Evaluate k^{th} derivative of the curve at u
   */
-  virtual VectorDIM eval(double u, unsigned int k) const = 0;
+  virtual VectorDIM eval(T u, unsigned int k) const = 0;
 
 
   /**
@@ -125,6 +126,23 @@ public:
         H(i, j) = 0.0;
       }
     }
+  }
+
+  /*
+  * Returns true if the curve intersects with the aligned box at any point from
+  * parameter from to parameter to when robot is a box with side 2*radius
+  */
+  virtual bool intersects(const AlignedBox& box, T from, T to, T radius) const {
+    const T step = 0.01;
+    const VectorDIM rad(radius, radius, radius);
+    for(T t = from; t <= to; t += step) {
+      VectorDIM pos = eval(t, 0);
+      AlignedBox robot_box(pos - rad, pos + rad);
+      if(box.intersects(robot_box)) {
+        return true;
+      }
+    }
+    return false;
   }
 };
 
