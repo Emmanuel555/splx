@@ -329,6 +329,15 @@ public:
     return m_controlPoints[k];
   }
 
+
+  bool onNegativeSide(const Hyperplane& hp) const override {
+    for(const auto& cp: m_controlPoints) {
+      if(hp.signedDistance(cp) > 0)
+        return false;
+    }
+    return true;
+  }
+
   /*
    * Interpolate from point 'from' to point 'to' with n points.
    * 'from' is the 1st point, 'to' is nth point.

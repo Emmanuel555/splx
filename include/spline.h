@@ -96,8 +96,8 @@ class Spline {
       m_pieces.push_back(ptr);
     }
 
-    Curve<T, DIM>& getPiece(unsigned int i) {
-      return *m_pieces[i];
+    std::shared_ptr<Curve<T, DIM> > getPiece(unsigned int i) {
+      return m_pieces[i];
     }
 
     unsigned int numPieces() const {
@@ -239,6 +239,9 @@ class Spline {
 
     /*
      * QP is the qp matrices of combined optimization
+     * Gets the real data from QP matrix
+     * Fixes the QPs matrices in the way as well
+     * which can be nice, dunno
     */
     void loadControlPoints(const QPMatrices& QP, std::vector<QPMatrices>& QPs) {
       assert(QPs.size() == m_pieces.size());
@@ -260,7 +263,7 @@ class Spline {
       const T step = 0.01;
       VectorDIM rad(radius, radius, radius);
       for(T t = from; t <= to; t += step) {
-        auto& info = curveInfo(t);
+        auto info = curveInfo(t);
         unsigned int i = info.first;
         T u = info.second;
         VectorDIM pos = m_pieces[i]->eval(u, 0);
@@ -270,6 +273,24 @@ class Spline {
         }
       }
       return false;
+    }
+
+    /*
+    * Returns true if the ith piece is in the negative side of hp
+    */
+    bool onNegativeSide(const Hyperplane& hp, unsigned int i) const {
+      return m_pieces[i]->onNegativeSide(hp);
+    }
+
+    /*
+    * Returns true if the spline is the negative side of the hyperplane
+    */
+    bool onNegativeSide(const Hyperplane& hp) const {
+      for(int i = 0; i < m_pieces.size(); i++) {
+        if(!onNegativeSide(hp, i))
+          return false;
+      }
+      return true;
     }
 
   private:

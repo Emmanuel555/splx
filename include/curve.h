@@ -103,6 +103,13 @@ public:
   */
   virtual Row getQPBasisRow(T u, unsigned int k) const = 0;
 
+
+  /*
+  * Returns true if the curve is on the negative side of the hyperplane
+  * otherwise returns false
+  */
+  virtual bool onNegativeSide(const Hyperplane& hp) const = 0;
+
   /**
    * Converts hessian matrix to upper triangular matrix that can be used in QPs
    * where objective has the term p'Dp instead of 1/2 p'Hp

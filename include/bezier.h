@@ -51,6 +51,17 @@ class Bezier : public Curve<T, DIM> {
       assert(a >= 0);
     }
 
+    /*
+    * Construct from curve pointer
+    * curve->m_type should be beizer
+    */
+    Bezier(const std::shared_ptr<Curve<T, DIM>> curve): Curve<T, DIM>(Curve<T, DIM>::CurveType::BEZIER) {
+      assert((curve->m_type == Curve<T, DIM>::CurveType::BEZIER));
+      auto bezpt = std::static_pointer_cast<Bezier<T, DIM>>(curve);
+      m_a = bezpt->m_a;
+      m_controlPoints = bezpt->m_controlPoints;
+    }
+
     /**
      * In all functions that extends these matrices, it is assumed that
      * order of variables is
@@ -255,6 +266,18 @@ class Bezier : public Curve<T, DIM> {
           m_controlPoints[i](d) = QP.x(d * m_controlPoints.size() + i);
         }
       }
+    }
+
+    /*
+    * Returns true if the curve is in the negative side of the hyperplane hp
+    * leverage convex hull property
+    */
+    bool onNegativeSide(const Hyperplane& hp) const override {
+      for(const auto& cp: m_controlPoints) {
+        if(hp.signedDistance(cp) > 0)
+          return false;
+      }
+      return true;
     }
   private:
 
