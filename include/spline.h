@@ -8,6 +8,11 @@
 #include <numeric>
 #include "bezier.h"
 #include "bspline.h"
+#include <iostream>
+
+using std::cout;
+using std::endl;
+using std::vector;
 
 namespace splx {
 
@@ -63,7 +68,9 @@ class Spline {
       }
 
       if(i == m_pieces.size()) {
-        throw OutOfBoundsException("given parameter is out of bounds");
+         i = m_pieces.size() - 1;
+         u = m_pieces[i]->parameterSpan();
+         // throw OutOfBoundsException("given parameter is out of bounds");
       }
 
       return std::make_pair(i, u);
@@ -269,6 +276,19 @@ class Spline {
         VectorDIM pos = m_pieces[i]->eval(u, 0);
         AlignedBox robot_box(pos - rad, pos + rad);
         if(box.intersects(robot_box)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /*
+    * Returns true if the spline is inside of any of the aligned boxes at any point
+    * from parameter from to parameter to
+    */
+    bool intersects(const vector<AlignedBox>& boxes, T from, T to, T radius) const {
+      for(const auto& box: boxes) {
+        if(intersects(box, from, to, radius)) {
           return true;
         }
       }
