@@ -268,6 +268,20 @@ class Bezier : public Curve<T, DIM> {
       }
     }
 
+    void resetCostMatrix(QPMatrices& QP) const override {
+      unsigned int S = DIM * m_controlPoints.size();
+      for(int i = 0; i < S; i++)
+        for(int j = 0; j < S; j++)
+          QP.H(i, j) = 0.0;
+    }
+
+    void resetConstraintMatrices(QPMatrices& QP) const override {
+      unsigned int S = DIM * m_controlPoints.size();
+      QP.A.resize(0, S);
+      QP.lbA.resize(0);
+      QP.ubA.resize(0);
+    }
+
     /*
     * Returns true if the curve is in the negative side of the hyperplane hp
     * leverage convex hull property
