@@ -114,6 +114,12 @@ public:
   */
   virtual bool onNegativeSide(const Hyperplane& hp) const = 0;
 
+  /*
+  * Returns the maximum magnitude of kth derivative of the curve
+  * with evaluations at every step
+  */
+  virtual T maxDerivativeMagnitude(unsigned int K, T step) const = 0;
+
   /**
    * Converts hessian matrix to upper triangular matrix that can be used in QPs
    * where objective has the term p'Dp instead of 1/2 p'Hp
