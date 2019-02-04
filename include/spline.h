@@ -103,7 +103,7 @@ class Spline {
       m_pieces.push_back(ptr);
     }
 
-    std::shared_ptr<Curve<T, DIM> > getPiece(unsigned int i) {
+    std::shared_ptr<Curve<T, DIM> > getPiece(unsigned int i) const {
       return m_pieces[i];
     }
 
