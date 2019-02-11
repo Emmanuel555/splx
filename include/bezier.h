@@ -200,7 +200,7 @@ class Bezier : public Curve<T, DIM> {
 
       for(unsigned int d = 0; d < DIM; d++) {
         for(unsigned int m = 0; m < S; m++) {
-          if(m >= d*m_controlPoints.size() && m <= ((d+1)*m_controlPoints.size())) {
+          if(m >= d*m_controlPoints.size() && m < ((d+1)*m_controlPoints.size())) {
             QP.A(ridx+d, m) = basis[m - d*m_controlPoints.size()];
           } else {
             QP.A(ridx+d, m) = 0.0;
@@ -271,6 +271,7 @@ class Bezier : public Curve<T, DIM> {
       }
     }
 
+/*
     void resetCostMatrix(QPMatrices& QP) const override {
       unsigned int S = DIM * m_controlPoints.size();
       for(int i = 0; i < S; i++)
@@ -284,6 +285,7 @@ class Bezier : public Curve<T, DIM> {
       QP.lbA.resize(0);
       QP.ubA.resize(0);
     }
+*/
 
     /*
     * Returns true if the curve is in the negative side of the hyperplane hp

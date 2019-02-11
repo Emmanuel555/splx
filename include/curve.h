@@ -103,10 +103,10 @@ public:
   */
   virtual Row getQPBasisRow(T u, unsigned int k) const = 0;
   // resets the A, lbA, ubA matrices
-  virtual void resetConstraintMatrices(QPMatrices& QP) const = 0;
+  //virtual void resetConstraintMatrices(QPMatrices& QP) const = 0;
 
   // resets H matrix
-  virtual void resetCostMatrix(QPMatrices& QP) const = 0;
+  //virtual void resetCostMatrix(QPMatrices& QP) const = 0;
 
   /*
   * Returns true if the curve is on the negative side of the hyperplane

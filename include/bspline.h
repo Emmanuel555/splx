@@ -22,6 +22,7 @@ public:
   using QPMatrices = typename Curve<T, DIM>::QPMatrices;
   using Row = typename Curve<T, DIM>::Row;
 
+
   /**
    * Construct a b-spline where basis functions are of
    * degree deg and curve has parameter u in [A, B]
@@ -517,6 +518,12 @@ public:
 
   inline T parameterSpan() const override {
     return m_a;
+  }
+
+  T maxDerivativeMagnitude(unsigned int K, T step) const override {
+    std::cout << "Not IMPLEMENTED" << std::endl;
+    exit(0);
+    return 0;
   }
 
 

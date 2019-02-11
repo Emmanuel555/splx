@@ -47,6 +47,31 @@ class Spline {
     }
 
 
+
+    Spline& operator=(const Spline& rhs) {
+      if(this != &rhs) {
+        m_pieces.clear();
+        for(const auto& pieceptr: rhs.m_pieces) {
+          if(pieceptr->m_type == Curve<T,DIM>::CurveType::BEZIER) {
+            auto bezptr = std::static_pointer_cast<Bezier<T,DIM>>(pieceptr);
+            addPiece(*bezptr);
+          } else if(pieceptr->m_type == Curve<T, DIM>::CurveType::BSPLINE) {
+            auto bsplptr = std::static_pointer_cast<BSpline<T,DIM>>(pieceptr);
+            addPiece(*bsplptr);
+          }
+        }
+      }
+      return *this;
+    }
+
+    Spline(const Spline& rhs) {
+      *this = rhs;
+    }
+
+    Spline()  {
+      
+    }
+
     /*
      * Evaluate k^th derivative of spline at parameter u
     */
