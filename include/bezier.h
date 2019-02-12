@@ -2,7 +2,6 @@
 #define SPLX_BEZIER_H
 
 #include "curve.h"
-#include <vector>
 #include <iostream>
 #include <numeric>
 #include <Eigen/StdVector>

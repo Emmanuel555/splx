@@ -2,7 +2,7 @@
 #define SPLX_SPLINE_H
 
 
-#include <vector>
+#include <Eigen/StdVector>
 #include <memory>
 #include "curve.h"
 #include <numeric>
@@ -69,7 +69,7 @@ class Spline {
     }
 
     Spline()  {
-      
+
     }
 
     /*

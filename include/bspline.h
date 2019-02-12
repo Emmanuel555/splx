@@ -2,7 +2,6 @@
 #define SPLX_BSPLINE_H
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
-#include <vector>
 #include "curve.h"
 #include <utility>
 #include <numeric>
