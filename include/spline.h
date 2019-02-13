@@ -175,6 +175,15 @@ class Spline {
       m_pieces[i]->extendQPHyperplaneConstraint(QPs[i], hp);
     }
 
+    /*
+    * Add hyperplane cost for piece i
+    */
+    void extendQPHyperplaneCost(std::vector<QPMatrices>& QPs, unsigned int i, const Hyperplane& hp, T lambda) const {
+      assert(QPs.size() == m_pieces.size());
+      assert(i < QPs.size());
+      m_pieces[i]->extendQPHyperplaneCost(QPs[i], hp, lambda);
+    }
+
     QPMatrices combineQPMatrices(const std::vector<QPMatrices>& QPs) {
       QPMatrices QP;
       unsigned int varCount = 0;

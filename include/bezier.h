@@ -248,6 +248,76 @@ class Bezier : public Curve<T, DIM> {
       }
     }
 
+    /*
+    * costs increases as control points get close to the hp
+    * lambda * \sum_{i=0}^{m_controlPoints.size() - 1} -||m_controlPoints[i] \dot n + d ||^2
+    * adds costs for only the points that are on the negative side of the hyperplane
+    * this is to deal errors and not magnify them
+    */
+    void extendQPHyperplaneCost(QPMatrices& QP, const Hyperplane& hp, T lambda) const override {
+      const auto& n = hp.normal();
+      const T d = hp.offset();
+      T lo = 0;
+      T hi = lambda;
+      unsigned int S = DIM * m_controlPoints.size();
+
+
+      // do binary search between lo and hi for positive definiteness
+      // set lambda to be biggest lambda in [0, lambda] such that H matrix
+      // is positive definite
+      const T precision = 1e-2;
+      Matrix H;
+      Matrix g;
+      while(lo + precision < hi) {
+        lambda = (hi + lo) / 2;
+        H = QP.H;
+        g = QP.g;
+        for(unsigned int p = 0; p < m_controlPoints.size(); p++) {
+          const VectorDIM& pt = m_controlPoints[p];
+          if(hp.signedDistance(pt) < 0) {
+            for(unsigned int i = 0; i < DIM; i++) {
+              for(unsigned int j = 0; j < DIM; j++) {
+                H(i * m_controlPoints.size() + p, j * m_controlPoints.size() + p)
+                  -= lambda * n(i) * n(j);
+              }
+
+              g(i * m_controlPoints.size() + p) -= lambda * 2 * d * n(i);
+            }
+          }
+
+        }
+        auto eigenvalues = H.eigenvalues();
+        T mineig = std::numeric_limits<T>::infinity();
+        for(unsigned int i = 0; i < S; i++) {
+          mineig = std::min(mineig, eigenvalues(i).real());
+        }
+        if(mineig <= 0) {
+          // not pd
+          hi = lambda;
+        } else {
+          // pd
+          lo = lambda;
+        }
+      }
+
+      if(lo != 0) {
+        for(unsigned int p = 0; p < m_controlPoints.size(); p++) {
+          const VectorDIM& pt = m_controlPoints[p];
+          if(hp.signedDistance(pt) < 0) {
+            for(unsigned int i = 0; i < DIM; i++) {
+              for(unsigned int j = 0; j < DIM; j++) {
+                QP.H(i * m_controlPoints.size() + p, j * m_controlPoints.size() + p)
+                  -= lo * n(i) * n(j);
+              }
+
+              QP.g(i * m_controlPoints.size() + p) -= lo * 2 * d * n(i);
+            }
+          }
+
+        }
+      }
+    }
+
     Row getQPBasisRow(T u, unsigned int k) const override {
       std::vector<T> basis = evalBasisFuncs(u, k);
       assert(basis.size() == m_controlPoints.size());

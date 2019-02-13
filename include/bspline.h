@@ -525,6 +525,11 @@ public:
     return 0;
   }
 
+  void extendQPHyperplaneCost(QPMatrices& QP, const Hyperplane& hp, T lambda) const override {
+    std::cout << "Not IMPLEMENTED" << std::endl;
+    exit(0);
+  }
+
 
   unsigned int m_degree; // degree of basis functions
   T m_a; // parameter span [0, m_a]
