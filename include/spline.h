@@ -168,11 +168,11 @@ class Spline {
     /*
      * require i^th curve to be in the negative side of hyperplane hp
     */
-    void extendQPHyperplaneConstraint(std::vector<QPMatrices>& QPs, unsigned int i, const Hyperplane& hp) const {
+    void extendQPHyperplaneConstraint(std::vector<QPMatrices>& QPs, unsigned int i, const Hyperplane& hp, bool addAsCostIfFirstPointViolates = false, T lambda = 1) const {
       assert(QPs.size() == m_pieces.size());
       assert(i < QPs.size());
 
-      m_pieces[i]->extendQPHyperplaneConstraint(QPs[i], hp);
+      m_pieces[i]->extendQPHyperplaneConstraint(QPs[i], hp, addAsCostIfFirstPointViolates, lambda);
     }
 
     /*

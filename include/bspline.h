@@ -257,7 +257,7 @@ public:
   /*
    * Same as above but all points.
   */
-  void extendQPHyperplaneConstraint(QPMatrices& QP, const Hyperplane& hp) const override {
+  void extendQPHyperplaneConstraint(QPMatrices& QP, const Hyperplane& hp, bool addAsCostIfFirstPointViolates = false, T lambda = 1) const override {
     extendQPHyperplaneConstraint(QP, 0U, (unsigned int) m_controlPoints.size() - 1U, hp);
   }
 

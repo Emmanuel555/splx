@@ -95,7 +95,7 @@ public:
   virtual void extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, const VectorDIM& target) const = 0;
   virtual void extendQPDecisionConstraint(QPMatrices&QP, T lb, T ub) const = 0;
   virtual void loadControlPoints(const QPMatrices& QP) = 0;
-  virtual void extendQPHyperplaneConstraint(QPMatrices& QP, const Hyperplane& hp) const = 0;
+  virtual void extendQPHyperplaneConstraint(QPMatrices& QP, const Hyperplane& hp, bool addAsCostIfFirstPointViolates, T lambda) const = 0;
   virtual void extendQPHyperplaneCost(QPMatrices& QP, const Hyperplane& hp, T lambda) const = 0;
   /*
    * The row of k^th derivative of basis functions evaluated at u

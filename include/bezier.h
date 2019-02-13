@@ -214,8 +214,17 @@ class Bezier : public Curve<T, DIM> {
      * Add constraint that requires curve to be on the negative side of hp
      *
      * Effectively, enforces all points to be in the negative side of the hp.
+     * If first point violates the hyperplane and addAsCostIfFirstPointViolates set
+     * to true do not impose constraint, but add the following cost
+     *
+     * n: normal of hp
+     * d: offset of hp + small step (shift hyperplane back)
+     *
+     * lambda * \sum_{i=0}^{m_controlPoints.size() - 1} ||n.dot(cp) + D||^2
+     * i.e., minimize the distance to the slightly shifted hp
+     *
     */
-    void extendQPHyperplaneConstraint(QPMatrices& QP, const Hyperplane& hp) const override {
+    void extendQPHyperplaneConstraint(QPMatrices& QP, const Hyperplane& hp, bool addAsCostIfFirstPointViolates = false, T lambda = 1) const override {
       unsigned int ridx = QP.A.rows();
       QP.A.conservativeResize(QP.A.rows() + m_controlPoints.size(), QP.A.cols());
       QP.lbA.conservativeResize(QP.lbA.rows() + m_controlPoints.size());
@@ -224,15 +233,34 @@ class Bezier : public Curve<T, DIM> {
 
       unsigned int S = DIM * m_controlPoints.size();
 
-      for(unsigned int i = 0; i < m_controlPoints.size(); i++) {
-        for(unsigned int s = 0; s < S; s++) {
-          QP.A(ridx + i, s) = 0.0;
+      bool first_point_violates = hp.signedDistance(m_controlPoints[0]) >= 0;
+
+      if(addAsCostIfFirstPointViolates && first_point_violates) {
+        const T step = 0.1;
+        Hyperplane offsetted_hp = hp;
+        offsetted_hp.offset() += step * hp.normal().norm();
+        const auto& n = offsetted_hp.normal();
+        T d = offsetted_hp.offset();
+        for(unsigned int p = 0; p < m_controlPoints.size(); p++) {
+          for(unsigned int i =0; i < DIM; i++) {
+            for(unsigned int j = 0; j < DIM; j++) {
+              QP.H(i * m_controlPoints.size() + p, j * m_controlPoints.size() + p) +=
+                lambda * n(i) * n(j);
+            }
+            QP.g(i * m_controlPoints.size() + p) += lambda * 2 * d * n(i);
+          }
         }
-        for(unsigned int d = 0; d < DIM; d++) {
-          QP.A(ridx + i, d*m_controlPoints.size() + i) = hp.normal()(d);
+      } else {
+        for(unsigned int i = 0; i < m_controlPoints.size(); i++) {
+          for(unsigned int s = 0; s < S; s++) {
+            QP.A(ridx + i, s) = 0.0;
+          }
+          for(unsigned int d = 0; d < DIM; d++) {
+            QP.A(ridx + i, d*m_controlPoints.size() + i) = hp.normal()(d);
+          }
+          QP.lbA(ridx + i) = std::numeric_limits<T>::lowest();
+          QP.ubA(ridx + i) = -hp.offset();
         }
-        QP.lbA(ridx + i) = std::numeric_limits<T>::lowest();
-        QP.ubA(ridx + i) = -hp.offset();
       }
     }
 
