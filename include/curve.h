@@ -2,6 +2,7 @@
 #define SPLX_CURVE_H
 #include <Eigen/Dense>
 #include <cmath>
+#include <vector>
 
 namespace splx {
 
@@ -93,7 +94,7 @@ public:
   virtual void extendQPIntegratedSquaredDerivative(QPMatrices& QP, unsigned int k, T lambda) const = 0;
   virtual void extendQPPositionAt(QPMatrices& QP, T u, const VectorDIM& pos, T theta) const = 0;
   virtual void extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, const VectorDIM& target) const = 0;
-  virtual void extendQPDecisionConstraint(QPMatrices&QP, T lb, T ub) const = 0;
+  virtual void extendQPDecisionConstraint(QPMatrices&QP, const std::vector<T>& lb, const std::vector<T>& ub) const = 0;
   virtual void loadControlPoints(const QPMatrices& QP) = 0;
   virtual void extendQPHyperplaneConstraint(QPMatrices& QP, const Hyperplane& hp, bool addAsCostIfFirstPointViolates, T lambda) const = 0;
   virtual void extendQPHyperplaneCost(QPMatrices& QP, const Hyperplane& hp, T lambda) const = 0;

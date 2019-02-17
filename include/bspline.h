@@ -282,11 +282,9 @@ public:
    *
    * Effectively, it constraints the curve to be inside a box.
   */
-  void extendQPDecisionConstraint(QPMatrices&QP, T lb, T ub) const override {
-    for(unsigned int i=0; i < QP.lbX.rows(); i++) {
-      QP.lbX(i) = lb;
-      QP.ubX(i) = ub;
-    }
+  void extendQPDecisionConstraint(QPMatrices&QP, const std::vector<T>& lb, const std::vector<T>& ub) const override {
+    std::cout << "NOT IMPELEMTED" << std::endl;
+    exit(0);
   }
 
   Row getQPBasisRow(T u, unsigned int k) const override {

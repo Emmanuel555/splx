@@ -186,6 +186,7 @@ class Bezier : public Curve<T, DIM> {
      * Add constraint that requires the k^th derivative of bezier at u=0 to be target.
     */
     void extendQPBeginningConstraint(QPMatrices& QP, unsigned int k, const VectorDIM& target) const override {
+      const T eps = 0;
       unsigned int degree = m_controlPoints.size();
       assert(k <= degree);
       unsigned int ridx = QP.A.rows();
@@ -205,8 +206,8 @@ class Bezier : public Curve<T, DIM> {
             QP.A(ridx+d, m) = 0.0;
           }
         }
-        QP.lbA(ridx+d) = target(d);
-        QP.ubA(ridx+d) = target(d);
+        QP.lbA(ridx+d) = target(d) - eps;
+        QP.ubA(ridx+d) = target(d) + eps;
       }
     }
 
@@ -269,10 +270,10 @@ class Bezier : public Curve<T, DIM> {
      *
      * Effectively, it constraints the curve to be inside a box.
     */
-    void extendQPDecisionConstraint(QPMatrices& QP, T lb, T ub) const override {
+    void extendQPDecisionConstraint(QPMatrices& QP, const std::vector<T>& lb, const std::vector<T>& ub) const override {
       for(unsigned int i=0; i < QP.lbX.rows(); i++) {
-        QP.lbX(i) = lb;
-        QP.ubX(i) = ub;
+        QP.lbX(i) = lb[i/m_controlPoints.size()];
+        QP.ubX(i) = ub[i/m_controlPoints.size()];
       }
     }
 

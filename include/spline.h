@@ -157,7 +157,7 @@ class Spline {
       m_pieces[0]->extendQPBeginningConstraint(QPs[0], k, target);
     }
 
-    void extendQPDecisionConstraint(std::vector<QPMatrices>& QPs, T lb, T ub) const {
+    void extendQPDecisionConstraint(std::vector<QPMatrices>& QPs, const std::vector<T>& lb, const std::vector<T>& ub) const {
       assert(QPs.size() == m_pieces.size());
 
       for(unsigned int i = 0; i < QPs.size(); i++) {
@@ -249,6 +249,7 @@ class Spline {
      * Imposes k^th degree continuity constraint between piece i and i+1
     */
     void extendQPContinuityConstraint(QPMatrices& QP, const std::vector<QPMatrices>& QPs, unsigned int i, unsigned int k) {
+      const T eps = 0;
       assert(i < QPs.size() - 1);
       const unsigned int varCount = QP.x.rows();
       unsigned int varCountBeforeI = 0;
@@ -267,8 +268,8 @@ class Spline {
       QP.ubA.conservativeResize(QP.ubA.rows() + DIM);
 
       for(unsigned int d = 0; d < DIM; d++) {
-        QP.lbA(ridx + d) = 0.0;
-        QP.ubA(ridx + d) = 0.0;
+        QP.lbA(ridx + d) = -eps;
+        QP.ubA(ridx + d) = +eps;
         for(unsigned int j = 0; j < varCount; j++) {
           QP.A(ridx+d, j) = 0.0;
         }
@@ -301,7 +302,7 @@ class Spline {
     * parameter from to parameter to
     */
     bool intersects(const AlignedBox& box, T from, T to, T radius) const {
-      const T step = 0.01;
+      const T step = 0.05;
       VectorDIM rad(radius, radius, radius);
       for(T t = from; t <= to; t += step) {
         auto info = curveInfo(t);
