@@ -7,7 +7,6 @@
 #include <Eigen/StdVector>
 #include <algorithm>
 
-using std::max;
 
 namespace splx {
 
@@ -460,7 +459,7 @@ class Bezier : public Curve<T, DIM> {
     T maxDerivativeMagnitude(unsigned int k, T step) const override {
       T max_mag = std::numeric_limits<T>::lowest();
       for(T t = 0; t < m_a; t += step) {
-        max_mag = max(max_mag, eval(t, k).norm());
+        max_mag = std::max(max_mag, eval(t, k).norm());
       }
       return max_mag;
     }

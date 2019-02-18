@@ -10,9 +10,6 @@
 #include "bspline.h"
 #include <iostream>
 
-using std::cout;
-using std::endl;
-using std::vector;
 
 namespace splx {
 
@@ -321,7 +318,7 @@ class Spline {
     * Returns true if the spline is inside of any of the aligned boxes at any point
     * from parameter from to parameter to
     */
-    bool intersects(const vector<AlignedBox>& boxes, T from, T to, T radius) const {
+    bool intersects(const std::vector<AlignedBox>& boxes, T from, T to, T radius) const {
       for(const auto& box: boxes) {
         if(intersects(box, from, to, radius)) {
           return true;
