@@ -1,4 +1,4 @@
-# splx
+qweqwe# splx
 splx is a C++ BSpline/Bezier library with quadratic programming extensions. Include bezier.h, bspline.h, or spline.h depending on which type of curves you want to use.
 
 Check test/testbezier.cpp, test/testbspline.cpp, test/spline.cpp for example implementations.
