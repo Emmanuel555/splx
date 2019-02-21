@@ -352,7 +352,7 @@ class Spline {
     T maxDerivativeMagnitude(unsigned int k, T step) const {
       T max_mag = std::numeric_limits<T>::lowest();
       for(const auto& piece: m_pieces) {
-        max_mag = max(max_mag, piece->maxDerivativeMagnitude(k, step));
+        max_mag = std::max(max_mag, piece->maxDerivativeMagnitude(k, step));
       }
 
       return max_mag;
