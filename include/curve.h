@@ -152,9 +152,7 @@ public:
   * parameter from to parameter to when robot is a box with side 2*radius
   */
   virtual bool intersects(const AlignedBox& box, T from, T to, T radius) const {
-    return false;
-    /*
-    DISABLED FOR NOW TODO:FIX
+
     const T step = 0.01;
     const VectorDIM rad(radius, radius, radius);
     for(T t = from; t <= to; t += step) {
@@ -165,7 +163,7 @@ public:
       }
     }
     return false;
-    */
+    
   }
 };
 

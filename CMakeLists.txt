@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(bspline)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -pedantic ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_BUILD_TYPE Debug)
 
@@ -14,7 +14,7 @@ find_package(Eigen3 REQUIRED)
 
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
-  ${PROJECT_SOURCE_DIR}/third_party
+  ${PROJECT_SOURCE_DIR}/third_party/Catch2/single_include/catch2
   ${EIGEN3_INCLUDE_DIR}
   ${QPOASES_INCLUDE_DIR}
 
@@ -22,46 +22,35 @@ include_directories(
 
 
 add_executable(
-  catchbezier
-  test/catch_bezier.cpp
+  beziertests
+  test/bezier_tests.cpp
   test/main.cpp
 )
 
-target_link_libraries(
-catchbezier
-qpOASES
+add_executable(
+bsplinetests
+test/bspline_tests.cpp
+test/main.cpp
 )
+
 
 add_executable(
-bsplinetest
-test/testbspline.cpp
+curvetests
+test/curve_tests.cpp
+test/main.cpp
 )
 
-target_link_libraries(
-bsplinetest
-qpOASES
-)
 
 add_executable(
-beziertest
-test/testbezier.cpp
+splinetests
+test/spline_tests.cpp
+test/main.cpp
 )
 
-target_link_libraries(
-beziertest
-qpOASES
-)
-
-add_executable(
-splinetest
-test/testspline.cpp
-)
-
-target_link_libraries(
-splinetest
-qpOASES
-)
 
 
 include(CTest)
-add_test(NAME RunTests COMMAND $<TARGET_FILE:catchbezier>)
+add_test(NAME BezierTests COMMAND $<TARGET_FILE:beziertests>)
+add_test(NAME BSplineTests COMMAND $<TARGET_FILE:bsplinetests>)
+add_test(NAME CurveTests COMMAND $<TARGET_FILE:curvetests>)
+add_test(NAME SplineTests COMMAND $<TARGET_FILE:splinetests>)
