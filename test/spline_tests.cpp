@@ -1,6 +1,7 @@
-#include "catch.hpp"
+#include "catch2/catch.hpp"
+#include "spline.h"
 
-TEST_CASE( "example test" ) {
+TEST_CASE( "spline test" ) {
 
   REQUIRE(0==0);
 

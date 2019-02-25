@@ -1,6 +1,7 @@
-#include "catch.hpp"
+#include "catch2/catch.hpp"
+#include "bspline.h"
 
-TEST_CASE( "example test" ) {
+TEST_CASE( "bspline test" ) {
 
   REQUIRE(0==0);
 

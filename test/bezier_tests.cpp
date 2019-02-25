@@ -1,8 +1,11 @@
-#include "catch.hpp"
+#include "catch2/catch.hpp"
+#include "bezier.h"
 
-TEST_CASE( "example test" ) {
+TEST_CASE( "bezier test" ) {
 
-  REQUIRE(0==0);
+
+  splx::Bezier<double, 3U> bez(3);
+  REQUIRE(bez.m_a==3);
 
 
 }
