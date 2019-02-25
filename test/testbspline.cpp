@@ -63,7 +63,7 @@ int main() {
   vec(0) = 10;
   vec(1) = 20;
   bspl.extendQPPositionAt(QP, 7.0, vec, 10000.0);
-  bspl.extendQPDecisionConstraint(QP, -100, 100);
+  //bspl.extendQPDecisionConstraint(QP, -100, 100);
 
   BSpline<double, 2>::Hyperplane hp(2);
   hp.normal()(0) = 1;

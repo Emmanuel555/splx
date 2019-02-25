@@ -88,7 +88,7 @@ int main() {
   vec(0) = -8.5;
   vec(1) = -8.5;
   bez.extendQPPositionAt(QP, 7.0, vec, 10000.0);
-  bez.extendQPDecisionConstraint(QP, -10, 100);
+  //bez.extendQPDecisionConstraint(QP, -10, 100);
 
 
 

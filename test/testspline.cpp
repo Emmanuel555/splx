@@ -164,7 +164,7 @@ int main(int argc, char** argv) {
   vec(1) = 2;
 //  spl.extendQPPositionAt(qps, 8.1, vec, 50.7);
 
-  spl.extendQPDecisionConstraint(qps, -100, 100);
+  //spl.extendQPDecisionConstraint(qps, -100, 100);
 
   Spline<double, 2>::Hyperplane hp;
   hp.normal()(0) = 1;

@@ -6,6 +6,7 @@
 #include <numeric>
 #include <Eigen/StdVector>
 #include <algorithm>
+#include <memory>
 
 
 namespace splx {
