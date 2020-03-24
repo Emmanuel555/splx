@@ -1,7 +1,7 @@
-#ifndef SPLX_BEZIER_H
-#define SPLX_BEZIER_H
+#ifndef SPLX_BEZIER_HPP
+#define SPLX_BEZIER_HPP
 
-#include "curve.h"
+#include <splx/ParametricCurve.hpp>
 #include <iostream>
 #include <numeric>
 #include <Eigen/StdVector>
@@ -13,32 +13,32 @@
 namespace splx {
 
 template<typename T, unsigned int DIM>
-class Bezier : public Curve<T, DIM> {
+class Bezier : public ParametricCurve<T, DIM> {
   public:
-    using VectorDIM = typename Curve<T, DIM>::VectorDIM;
-    using Vector = typename Curve<T, DIM>::Vector;
-    using Hyperplane = typename Curve<T, DIM>::Hyperplane;
-    using Matrix = typename Curve<T, DIM>::Matrix;
-    using Row = typename Curve<T, DIM>::Row;
-    using ControlPoints = typename Curve<T, DIM>::ControlPoints;
-    using CurveType = typename Curve<T, DIM>::CurveType;
+    using VectorDIM = typename ParametricCurve<T, DIM>::VectorDIM;
+    using Vector = typename ParametricCurve<T, DIM>::Vector;
+    using Hyperplane = typename ParametricCurve<T, DIM>::Hyperplane;
+    using Matrix = typename ParametricCurve<T, DIM>::Matrix;
+    using Row = typename ParametricCurve<T, DIM>::Row;
+    using ControlPoints = typename ParametricCurve<T, DIM>::ControlPoints;
+    using CurveType = typename ParametricCurve<T, DIM>::CurveType;
 
-    Bezier(T a, const ControlPoints& cpts) : Curve<T, DIM>(Curve<T, DIM>::CurveType::BEZIER),
+    Bezier(T a, const ControlPoints& cpts) : ParametricCurve<T, DIM>(CurveType::BEZIER),
                                                       m_controlPoints(cpts),
                                                       m_a(a)
     {
       if(m_a <= 0) {
         throw std::domain_error(
-          "max parameter should be positive. given "
+          std::string("max parameter should be positive. given ")
           + std::to_string(m_a)
         );
       }
     }
 
-    Bezier(T a) : Curve<T, DIM>(Curve<T, DIM>::CurveType::BEZIER), m_a(a) {
+    Bezier(T a) : ParametricCurve<T, DIM>(CurveType::BEZIER), m_a(a) {
       if(m_a <= 0) {
         throw std::domain_error(
-          "max parameter should be positive. given "
+          std::string("max parameter should be positive. given ")
           + std::to_string(m_a)
         );
       }
@@ -48,10 +48,10 @@ class Bezier : public Curve<T, DIM> {
     * Construct from curve pointer
     * curve->m_type should be beizer
     */
-    Bezier(const std::shared_ptr<Curve<T, DIM>> curve): Curve<T, DIM>(Curve<T, DIM>::CurveType::BEZIER, curve->a) {
+    Bezier(const std::shared_ptr<ParametricCurve<T, DIM>> curve): ParametricCurve<T, DIM>(CurveType::BEZIER, curve->a) {
       if(curve->type != CurveType::Bezier) {
         throw std::domain_error(
-          "Tried to initialize bezier curve with another type of curve"s
+          std::string("tried to initialize bezier curve with another type of curve")
         );
       }
 
@@ -83,22 +83,22 @@ class Bezier : public Curve<T, DIM> {
     }
 
     unsigned int degree() const {
-      return this->numControlPoints - 1;
+      return this->numControlPoints() - 1;
     }
 
     Row getQPBasisRow(T u, unsigned int k) const override {
       if(k < 0) {
         throw std::domain_error(
-          "can't take k^th derivative of the curve since k is negative. k = "s
+          std::string("can't take k^th derivative of the curve since k is negative. k = ")
           + std::to_string(k)
         );
       }
 
       if(u < 0 || u > maxParameter()) {
         throw std::domain_error(
-          "u is outside of the range [0, "s
+          std::string("u is outside of the range [0, ")
           + std::to_string(maxParameter)
-          + "]"s
+          + std::string("]")
         );
       }
 
@@ -130,16 +130,16 @@ class Bezier : public Curve<T, DIM> {
     VectorDIM eval(T u, unsigned int k) const override {
       if(k < 0) {
         throw std::domain_error(
-          "can't take k^th derivative of the curve since k is negative. k = "s
+          std::string("can't take k^th derivative of the curve since k is negative. k = ")
           + std::to_string(k)
         );
       }
 
       if(u < 0 || u > maxParameter()) {
         throw std::domain_error(
-          "u is outside of the range [0, "s
+          std::string("u is outside of the range [0, ")
           + std::to_string(maxParameter)
-          + "]"s
+          + std::string("]")
         );
       }
 

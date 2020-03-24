@@ -1,3 +1,6 @@
 [submodule "third_party/qp_wrappers"]
 	path = third_party/qp_wrappers
 	url = https://github.com/USC-ACTLab/qp_wrappers
+[submodule "test/Catch2"]
+	path = test/Catch2
+	url = https://github.com/catchorg/Catch2/

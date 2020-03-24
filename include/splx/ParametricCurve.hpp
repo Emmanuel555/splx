@@ -1,5 +1,5 @@
-#ifndef SPLX_CURVE_H
-#define SPLX_CURVE_H
+#ifndef SPLX_PARAMETRIC_CURVE_HPP
+#define SPLX_PARAMETRIC_CURVE_HPP
 #include <Eigen/Dense>
 #include <cmath>
 #include <vector>
@@ -9,14 +9,14 @@ namespace splx {
 template <typename T, unsigned int DIM>
 class ParametricCurve {
 protected:
-  unsigned int fac(unsigned int n) const {
+  static unsigned int fac(unsigned int n) {
     unsigned int res = 1;
     for(unsigned int i = 2; i<=n; i++)
       res *= i;
     return res;
   }
 
-  unsigned int comb(unsigned int n, unsigned int k) const {
+  static unsigned int comb(unsigned int n, unsigned int k) {
     k = std::min(k, n-k);
     unsigned int top = 1;
     unsigned int bottom = 1;
@@ -27,11 +27,11 @@ protected:
     return top / bottom;
   }
 
-  unsigned int perm(unsigned int n, unsigned int k) const {
+  static unsigned int perm(unsigned int n, unsigned int k) {
     return fac(n) / fac(n-k);
   }
 
-  T pow(T base, unsigned int exp) const {
+  static T pow(T base, unsigned int exp) {
     if(base == 0 && exp == 0) {
       return 1;
     }
@@ -58,10 +58,10 @@ public:
   CurveType type;
 
 
-  Curve(CurveType t) : type(t) {
+  ParametricCurve(CurveType t) : type(t) {
   }
 
-  virtual ~Curve() {
+  virtual ~ParametricCurve() {
 
   }
   /*
