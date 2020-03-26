@@ -83,9 +83,15 @@ public:
   virtual bool onNegativeSide(const Hyperplane& hp) const = 0;
 
   /*
+  * Returns true if the curve is in the non-positive side of the hyperplane
+  */
+  virtual bool onNonPositiveSide(const Hyperplane& hp) const = 0;
+
+  /*
   * Get i^th control point
   */
   virtual VectorDIM& operator[](std::size_t i) = 0;
+  virtual const VectorDIM& operator[](std::size_t i) const = 0;
 
   /*
   * Get number of control points
@@ -94,10 +100,25 @@ public:
 
 
   /*
+    Append a new control points to the curve.
+  */
+  virtual void appendControlPoint(const VectorDIM& cpt) = 0;
+
+  /*
+    Remove i^th control point
+  */
+  virtual void removeControlPoint(std::size_t i) = 0;
+
+  /*
   * Returns the max parameter of the curve, i.e. returns a where curve is defined
   * for u \in [0, a]
   */
   virtual T maxParameter() const = 0;
+
+  /*
+  * Sets the new max parameter
+  */
+  virtual void maxParameter(T nw) = 0;
   
 };
 
