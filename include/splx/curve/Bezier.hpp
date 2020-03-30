@@ -1,7 +1,7 @@
 #ifndef SPLX_BEZIER_HPP
 #define SPLX_BEZIER_HPP
 
-#include <splx/ParametricCurve.hpp>
+#include <splx/curve/ParametricCurve.hpp>
 #include <iostream>
 #include <numeric>
 #include <Eigen/StdVector>

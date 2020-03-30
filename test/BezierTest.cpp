@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include <splx/Bezier.hpp>
+#include <splx/curve/Bezier.hpp>
 #include <stdexcept>
 
 TEST_CASE("initialization of Bezier curves", "[bezier]") {
