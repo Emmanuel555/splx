@@ -75,7 +75,13 @@ public:
     }
 
     void addEvalConstraint(T u, unsigned int k, const VectorDIM& target) override {
-
+        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
+        for(unsigned int i = 0; i < DIM; i++) {
+            Row coeff(this->numControlPoints() * DIM);
+            coeff.setZero();
+            coeff.block(0, i*this->numControlPoints(), 1, this->numControlPoints()) = basis;
+            Base::m_problem.add_constraint(coeff, target(i), target(i));
+        }
     }
 
     void addHyperplaneConstraintAll(const Hyperplane& hp) override {

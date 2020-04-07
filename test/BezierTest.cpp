@@ -203,3 +203,48 @@ TEST_CASE("BezierQPGenerator.addEvalCost test", "[BezierQPGenerator]") {
     REQUIRE((q_mtr - problem.Q()).squaredNorm() < double_eq_epsilon);
     REQUIRE((c_mtr - problem.c()).squaredNorm() < double_eq_epsilon);
 }
+
+TEST_CASE("BezierQPGenerator.addEvalConstraint test", "[BezierQPGenerator]") {
+    double double_eq_epsilon = 1e-20;
+    using Bez = splx::Bezier<double, 3>;
+    using VectorDIM = Bez::VectorDIM;
+    using Matrix = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
+    using Vector = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+
+    splx::BezierQPGenerator<double, 3> generator(8, 0.35914595895879409);
+    const auto& problem = generator.getProblem();
+
+    generator.addEvalConstraint(0, 0, VectorDIM(2.9406599999999998, 1.0991899999999999, 1.5));
+
+    Matrix A(3, 24);
+    A << 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0;
+    Vector lbAubA(3);
+    lbAubA << 2.9406599999999998, 1.0991899999999999, 1.5;
+
+    REQUIRE((problem.A() - A).squaredNorm() < double_eq_epsilon);
+    REQUIRE((problem.lb() - lbAubA).squaredNorm() < double_eq_epsilon);
+    REQUIRE((problem.ub() - lbAubA).squaredNorm() < double_eq_epsilon);
+
+    generator.addEvalConstraint(0, 1, VectorDIM(0, 0, 0));
+
+    Matrix A2(6, 24);
+    A2 << 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,-19.490682897543422,19.490682897543422,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-19.490682897543422,19.490682897543422,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-19.490682897543422,19.490682897543422,0,0,0,0,0,0;
+    Vector lbAubA2(6);
+    lbAubA2 << 2.9406599999999998,1.0991899999999999,       1.5,                                0,                                0, 0;
+    
+    REQUIRE((problem.A() - A2).squaredNorm() < double_eq_epsilon);
+    REQUIRE((problem.lb() - lbAubA2).squaredNorm() < double_eq_epsilon);
+    REQUIRE((problem.ub() - lbAubA2).squaredNorm() < double_eq_epsilon);
+
+    generator.addEvalConstraint(0, 2, VectorDIM(0, -4.4408920985006262e-16, -8.8817841970012523e-16));
+
+    Matrix A3(9, 24);
+    A3 << 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,-19.490682897543422,19.490682897543422,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-19.490682897543422,19.490682897543422,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-19.490682897543422,19.490682897543422,0,0,0,0,0,0,325.61718841079289,-651.2343768215859,325.61718841079289,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,325.61718841079289,-651.2343768215859,325.61718841079289,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,325.61718841079289,-651.2343768215859,325.61718841079289,0,0,0,0,0;
+    Vector lbAubA3(9);
+    lbAubA3 << 2.9406599999999998,     1.0991899999999999,                    1.5,                      0,                      0,                      0,                      0,-4.4408920985006262e-16,-8.8817841970012523e-16;
+
+
+    REQUIRE((problem.A() - A3).squaredNorm() < double_eq_epsilon);
+    REQUIRE((problem.lb() - lbAubA3).squaredNorm() < double_eq_epsilon);
+    REQUIRE((problem.ub() - lbAubA3).squaredNorm() < double_eq_epsilon);
+}
