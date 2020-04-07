@@ -8,7 +8,7 @@ namespace splx {
 
 template <typename T, unsigned int DIM>
 class ParametricCurve {
-protected:
+public:
   static unsigned int fac(unsigned int n) {
     unsigned int res = 1;
     for(unsigned int i = 2; i<=n; i++)

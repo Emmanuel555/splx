@@ -8,14 +8,17 @@ namespace splx {
 template<typename T, unsigned int DIM>
 class QPGenerator {
 public:
-    using ParametricCurve = ParametricCurve<T, DIM>;
-    using VectorDIM = ParametricCurve::VectorDIM;
-    using Hyperplane = ParametricCurve::Hyperplane;
+    using _ParametricCurve = ParametricCurve<T, DIM>;
+    using VectorDIM = typename _ParametricCurve::VectorDIM;
+    using Hyperplane = typename _ParametricCurve::Hyperplane;
 
     using Problem = QPWrappers::Problem<T>;
-    using Index = Problem::Index;
+    using Index = typename Problem::Index;
 
-    QPGenerator(std::size_t n): ncpts(n), problem(n * DIM) {
+    using Matrix = typename _ParametricCurve::Matrix;
+    using Vector = typename _ParametricCurve::Vector;
+
+    QPGenerator(std::size_t n, T a): m_ncpts(n), m_a(a), m_problem(n * DIM) {
 
     }
 
@@ -27,12 +30,21 @@ public:
     virtual void addControlPointLimits(std::size_t i, const VectorDIM& lb, const VectorDIM& ub) = 0;
 
     std::size_t numControlPoints() const {
-        return ncpts;
+        return m_ncpts;
     }
     
+    unsigned int degree() const {
+        return m_ncpts - 1;
+    }
+
+    T maxParameter() const {
+        return m_a;
+    }
+
 protected:
-    std::size_t ncpts;
-    QPWrappers::Problem<T> problem;
+    std::size_t m_ncpts;
+    T m_a;
+    QPWrappers::Problem<T> m_problem;
 }; // end QPGenerator
 
 
