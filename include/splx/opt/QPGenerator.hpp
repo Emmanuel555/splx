@@ -22,9 +22,20 @@ public:
 
     }
 
+    /**
+    *   adds the cost lambda * \int_{0}^{m_a} ||df^k(u)/du^k||_2^2 du
+    */
     virtual void addIntegratedSquaredDerivativeCost(unsigned int k, T lambda) = 0;
+
+    /**
+    *   adds the cost lambda * ||f^k(u)-target||^2
+    */
     virtual void addEvalCost(T u, unsigned int k, const VectorDIM& target, T lambda) = 0;
-    virtual void addEvalConstraint(T u, unsigned int k, const VectorDIM& target, T lambda) = 0;
+
+    /**
+    *   adds constraint that f^k(u) = target
+    */
+    virtual void addEvalConstraint(T u, unsigned int k, const VectorDIM& target) = 0;
     virtual void addHyperplaneConstraintAll(const Hyperplane& hp) = 0;
     virtual void addHyperplaneConstraintAt(T u, const Hyperplane& hp) = 0;
     virtual void addControlPointLimits(std::size_t i, const VectorDIM& lb, const VectorDIM& ub) = 0;
@@ -39,6 +50,10 @@ public:
 
     T maxParameter() const {
         return m_a;
+    }
+
+    const Problem& getProblem() const {
+        return m_problem;
     }
 
 protected:

@@ -9,36 +9,6 @@ namespace splx {
 template <typename T, unsigned int DIM>
 class ParametricCurve {
 public:
-  static unsigned int fac(unsigned int n) {
-    unsigned int res = 1;
-    for(unsigned int i = 2; i<=n; i++)
-      res *= i;
-    return res;
-  }
-
-  static unsigned int comb(unsigned int n, unsigned int k) {
-    k = std::min(k, n-k);
-    unsigned int top = 1;
-    unsigned int bottom = 1;
-    for(unsigned int i=0; i<k; i++) {
-      bottom *= (i+1);
-      top *= (n-i);
-    }
-    return top / bottom;
-  }
-
-  static unsigned int perm(unsigned int n, unsigned int k) {
-    return fac(n) / fac(n-k);
-  }
-
-  static T pow(T base, unsigned int exp) {
-    if(base == 0 && exp == 0) {
-      return 1;
-    }
-    return std::pow(base, exp);
-  }
-
-public:
 
   using VectorDIM = Eigen::Matrix<T, DIM, 1>;
   using Vector = Eigen::Matrix<T, Eigen::Dynamic, 1>;
@@ -64,12 +34,6 @@ public:
   virtual ~ParametricCurve() {
 
   }
-  /*
-   * The row of k^th derivative of basis functions evaluated at u
-   *
-   * Remember that basis functions get multiplied with control points to evaluate the function
-  */
-  virtual Row getBasisRow(T u, unsigned int k) const = 0;
 
   /**
    * Evaluate k^{th} derivative of the curve at u

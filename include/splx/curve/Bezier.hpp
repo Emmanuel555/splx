@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
+#include <splx/internal/combinatorics.hpp>
+#include <splx/internal/bezier.hpp>
 
 
 namespace splx {
@@ -81,6 +83,7 @@ class Bezier : public ParametricCurve<T, DIM> {
       return m_controlPoints.size();
     }
 
+
     VectorDIM& operator[](std::size_t i) override {
       return this->m_controlPoints[i];
     }
@@ -122,48 +125,6 @@ class Bezier : public ParametricCurve<T, DIM> {
       return this->numControlPoints() - 1;
     }
 
-    Row getBasisRow(T u, unsigned int k) const override {
-      if(u < 0 || u > maxParameter()) {
-        throw std::domain_error(
-          std::string("u is outside of the range [0, ")
-          + std::to_string(maxParameter())
-          + std::string("]")
-        );
-      }
-
-      if(m_a == 0) {
-        Row result(this->numControlPoints());
-        result.setZero();
-        if(k == 0 && this->numControlPoints() > 0) {
-          result(0) = 1.0;
-        }
-        return result;
-      }
-
-      unsigned int degree = this->degree();
-      Row result(degree + 1);
-
-      T oneOverA = 1/m_a;
-      for(unsigned int i = 0; i <= degree; i++) {
-        T base = 0.0;
-        T mult = 1.0;
-        for(unsigned int j = 0; j+k <= degree; j++, mult *= u) {
-          if(j+k >= i) {
-            // base += pow(oneOverA, i) * this->comb(degree-i, j+k-i)
-            //       * pow(-oneOverA, j+k-i) * this->perm(j+k, k)
-            //       * mult;
-
-            base += this->comb(degree-i, j+k-i)
-              * pow(oneOverA, j+k) * this->perm(j+k, k)
-              * mult * ((j+k-i)%2 == 0 ? 1 : -1);
-          }
-        }
-        base *= this->comb(degree, i);
-        result(i) = base;
-      }
-      return result;
-    }
-
 
     /*
      * Evaluate k^th derivative of bezier curve at u = u.
@@ -179,7 +140,13 @@ class Bezier : public ParametricCurve<T, DIM> {
         );
       }
 
-      Row basis = this->getBasisRow(u, k);
+      if(this->numControlPoints() == 0) {
+        VectorDIM zero;
+        zero.setZero();
+        return zero;
+      }
+
+      Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
       VectorDIM result;
       result.setZero();
 

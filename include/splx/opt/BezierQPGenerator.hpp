@@ -1,6 +1,9 @@
 #ifndef SPLX_BEZIERQPGENERATOR_HPP
 #define SPLX_BEZIERQPGENERATOR_HPP
 #include <splx/opt/QPGenerator.hpp>
+#include <splx/internal/bezier.hpp>
+#include <splx/types.hpp>
+
 
 namespace splx {
 
@@ -15,20 +18,66 @@ public:
     using Hyperplane = typename Base::Hyperplane;
     using Matrix = typename Base::Matrix;
 
+    using Row = typename splx::Row<T>;
+
     BezierQPGenerator(std::size_t ncpts, T a): Base(ncpts, a) {
 
     }
 
     void addIntegratedSquaredDerivativeCost(unsigned int k, T lambda) override {
         if(k >= this->numControlPoints()) return;
+
+        Matrix bern = splx::internal::bezier::bernsteinCoefficientMatrix(this->degree(), this->maxParameter(), k);
+
+        Matrix SQI(this->numControlPoints(), this->numControlPoints());
+        SQI.setZero();
+
+        for(Index i = 0; i < this->numControlPoints(); i++) {
+            for(Index j = 0; j < this->numControlPoints(); j++) {
+                SQI(i, j) = splx::internal::pow(this->maxParameter(), i + j + 1) / (i+j+1);
+            }
+        }
+        
+        Matrix cost = 2 * lambda * bern * SQI * bern.transpose();
+
+        Matrix Qcost(this->numControlPoints() * DIM, this->numControlPoints() * DIM);
+        Qcost.setZero();
+
+        for(unsigned int i = 0; i < DIM; i++) {
+            Qcost.block(i*this->numControlPoints(), 
+                        i*this->numControlPoints(), 
+                        this->numControlPoints(), 
+                        this->numControlPoints()) = cost;
+        }
+
+        Base::m_problem.add_Q(Qcost);
     }
 
     void addEvalCost(T u, unsigned int k, const VectorDIM& target, T lambda) override {
+        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
+        Matrix Qext = 2 * lambda * basis.transpose() * basis;
+        Matrix Qbig(this->numControlPoints() * DIM, this->numControlPoints() * DIM);
+        Qbig.setZero();
+        Vector cext = -2 * lambda * basis.transpose();
+        Vector cbig(this->numControlPoints() * DIM);
+        cbig.setZero();
+        for(unsigned int i = 0; i < DIM; i++) {
+            Qbig.block(i*this->numControlPoints(), 
+                       i*this->numControlPoints(), 
+                       this->numControlPoints(), 
+                       this->numControlPoints()) = Qext;
+
+            cbig.block(i*this->numControlPoints(), 0, this->numControlPoints(), 1) = cext * target(i);
+        }
+
+        Base::m_problem.add_Q(Qbig);
+        Base::m_problem.add_c(cbig);
+    }
+
+    void addEvalConstraint(T u, unsigned int k, const VectorDIM& target) override {
 
     }
-    void addEvalConstraint(T u, unsigned int k, const VectorDIM& target, T lambda) override {
 
-    }
     void addHyperplaneConstraintAll(const Hyperplane& hp) override {
 
     }
@@ -39,73 +88,8 @@ public:
 
     }
 
-public:
-    Matrix bernsteinCoefficientMatrixTest(unsigned int k) const { // for test
-        return bernsteinCoefficientMatrix(k);
-    }
-
 private:
 
-    /*
-        Coefficient matrix for the k^th derivative bernstein base functions where each row r
-        contains coefficients where k^th derivative of i^th bernstein polynomial of degree d
-        can be expressed as r(0) + r(1)u + r(2)u^2 + ... + r(d)u^d
-    */
-    Matrix bernsteinCoefficientMatrix(unsigned int k) const {
-        Matrix bernsteinMtr(this->numControlPoints(), this->numControlPoints());
-        bernsteinMtr.setZero();
-
-        if(this->maxParameter() == 0) {
-            if(k == 0 && this->numControlPoints() > 0) {
-                bernsteinMtr(0, 0) = 1.0;
-            }
-            return bernsteinMtr;
-        }
-
-        unsigned int dcombi = 1;
-        for(Index i = 0; 
-
-            i < this->numControlPoints(); 
-
-            dcombi *= (this->degree()-i), 
-            dcombi /= (i+1), 
-            i++) {
-
-            unsigned int dminicombjmini = 1;
-            T min1 = 1;
-            T oneOverAPowj = _ParametricCurve::pow(1/this->maxParameter(), i);
-
-            for(Index j = i; 
-
-                j < this->numControlPoints(); 
-
-                dminicombjmini *= (this->degree() - j), 
-                dminicombjmini/= (j+1-i), 
-                j++, 
-                min1 *= -1, 
-                oneOverAPowj *= (1/this->maxParameter())) {
-
-                bernsteinMtr(i, j) = dcombi * dminicombjmini * min1 * oneOverAPowj;
-
-            }
-        }
-
-        Matrix derivative(this->numControlPoints(), this->numControlPoints());
-        derivative.setZero();
-
-        unsigned int jpermk = _ParametricCurve::fac(k);
-        for(unsigned int j = k;
-            
-            j < this->numControlPoints();
-            
-            jpermk *= (j+1),
-            jpermk /= (j+1-k),
-            j++) {
-            derivative(j, j-k) = jpermk;
-        }
-
-        return bernsteinMtr * derivative;
-    }
 };
 
 } // end namespace splx;
