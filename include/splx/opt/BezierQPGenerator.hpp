@@ -85,7 +85,14 @@ public:
     }
 
     void addHyperplaneConstraintAll(const Hyperplane& hp) override {
-
+        for(Index i = 0; i < Base::m_ncpts; i++) {
+            Row coeff(this->numControlPoints() * DIM);
+            coeff.setZero();
+            for(Index j = 0; j < DIM; j++) {
+                coeff(j * this->numControlPoints() + i) = hp.normal()(j);
+            }
+            Base::m_problem.add_constraint(coeff, std::numeric_limits<T>::lowest(), -hp.offset());
+        }
     }
     void addHyperplaneConstraintAt(T u, const Hyperplane& hp) override {
 

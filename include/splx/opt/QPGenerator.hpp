@@ -36,6 +36,12 @@ public:
     *   adds constraint that f^k(u) = target
     */
     virtual void addEvalConstraint(T u, unsigned int k, const VectorDIM& target) = 0;
+
+    /*
+    * given hyperplane hp(x) = a_1x_1+a_2x_2+...+a_nx_n + d = 0 
+    * such that n=(a_1, ..., a_n) is the normal,
+    * add a constraint so that hp(f(u)) <= 0 for all u 
+    */
     virtual void addHyperplaneConstraintAll(const Hyperplane& hp) = 0;
     virtual void addHyperplaneConstraintAt(T u, const Hyperplane& hp) = 0;
     virtual void addControlPointLimits(std::size_t i, const VectorDIM& lb, const VectorDIM& ub) = 0;
