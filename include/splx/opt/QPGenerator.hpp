@@ -11,6 +11,7 @@ public:
     using _ParametricCurve = ParametricCurve<T, DIM>;
     using VectorDIM = typename _ParametricCurve::VectorDIM;
     using Hyperplane = typename _ParametricCurve::Hyperplane;
+    using ControlPoints = typename _ParametricCurve::ControlPoints;
 
     using Problem = QPWrappers::Problem<T>;
     using Index = typename Problem::Index;
@@ -60,10 +61,6 @@ public:
     std::size_t numControlPoints() const {
         return m_ncpts;
     }
-    
-    unsigned int degree() const {
-        return m_ncpts - 1;
-    }
 
     T maxParameter() const {
         return m_a;
@@ -72,6 +69,12 @@ public:
     const Problem& getProblem() const {
         return m_problem;
     }
+
+    /*
+    * Given a solution constructed by the generator, return the array of control points
+    * extracted from the solution.
+    */
+    virtual ControlPoints controlPoints(const Vector& solution) const = 0; 
 
 protected:
     std::size_t m_ncpts;

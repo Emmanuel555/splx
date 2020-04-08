@@ -17,6 +17,7 @@ public:
     using VectorDIM = typename Base::VectorDIM;
     using Hyperplane = typename Base::Hyperplane;
     using Matrix = typename Base::Matrix;
+    using ControlPoints = typename Base::ControlPoints;
 
     using Row = typename splx::Row<T>;
 
@@ -113,7 +114,21 @@ public:
         }
     }
 
+    ControlPoints controlPoints(const Vector& solution) const override {
+        ControlPoints cpts;
+        for(unsigned int i = 0; i < Base::m_ncpts; i++) {
+            Vector cpt(DIM);
+            for(unsigned int j = 0; j < DIM; j++) {
+                cpt(j) = solution(j * this->numControlPoints() + i);
+            }
+        }
+    }
+
 private:
+
+    unsigned int degree() const {
+        return this->numControlPoints() - 1;
+    }
 
 };
 
