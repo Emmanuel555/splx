@@ -94,9 +94,17 @@ public:
             Base::m_problem.add_constraint(coeff, std::numeric_limits<T>::lowest(), -hp.offset());
         }
     }
-    void addHyperplaneConstraintAt(T u, const Hyperplane& hp) override {
 
+    void addHyperplaneConstraintAt(T u, const Hyperplane& hp) override {
+        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, 0);
+
+        Row coeff(this->numControlPoints() * DIM);
+        for(Index i = 0; i < DIM; i++) {
+            coeff.block(0, i*this->numControlPoints(), 1, this->numControlPoints()) = basis * hp.normal()(i);
+        }
+        Base::m_problem.add_constraint(coeff, std::numeric_limits<T>::lowest(), -hp.offset());
     }
+
     void addControlPointLimits(std::size_t i, const VectorDIM& lb, const VectorDIM& ub) override {
 
     }

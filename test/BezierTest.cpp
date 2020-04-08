@@ -302,3 +302,9 @@ TEST_CASE("BezierQPGenerator.addHyperplaneConstraintAll test", "[BezierQPGenerat
     REQUIRE((problem.lb() - lbA3).squaredNorm() < double_eq_epsilon);
     REQUIRE((problem.ub() - ubA3).squaredNorm() < double_eq_epsilon);
 }
+
+
+TEST_CASE("BezierQPGenerator.addHyperplaneConstraintAt test", "[BezierQPGenerator]") {
+    double double_eq_epsilon = 1e-20;
+    CHECK(std::string() == "todo!");
+}
