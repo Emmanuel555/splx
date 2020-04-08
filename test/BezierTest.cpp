@@ -308,3 +308,8 @@ TEST_CASE("BezierQPGenerator.addHyperplaneConstraintAt test", "[BezierQPGenerato
     double double_eq_epsilon = 1e-20;
     CHECK(std::string() == "todo!");
 }
+
+TEST_CASE("BezierQPGenerator.addControlPointLimits test", "[BezierQPGenerator]") {
+    double double_eq_epsilon = 1e-20;
+    CHECK(std::string() == "todo!");
+}

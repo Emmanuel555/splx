@@ -105,8 +105,12 @@ public:
         Base::m_problem.add_constraint(coeff, std::numeric_limits<T>::lowest(), -hp.offset());
     }
 
-    void addControlPointLimits(std::size_t i, const VectorDIM& lb, const VectorDIM& ub) override {
-
+    void addControlPointLimits(const VectorDIM& lb, const VectorDIM& ub) override {
+        for(Index j = 0; j < DIM; j++) {
+            for(Index i = 0; i < this->numControlPoints(); i++) {
+                Base::m_problem.set_var_limits(j * this->numControlPoints() + i, lb(j), ub(j));
+            }
+        }
     }
 
 private:

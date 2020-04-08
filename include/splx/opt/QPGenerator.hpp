@@ -50,7 +50,12 @@ public:
     * add a constraint so that hp(f(u)) <= 0 at u
     */
     virtual void addHyperplaneConstraintAt(T u, const Hyperplane& hp) = 0;
-    virtual void addControlPointLimits(std::size_t i, const VectorDIM& lb, const VectorDIM& ub) = 0;
+
+    /*
+    * Require that all control points stay inside the bounding hyperbox with lower left corner
+    * lb, and upper left corner ub
+    */
+    virtual void addControlPointLimits(const VectorDIM& lb, const VectorDIM& ub) = 0;
 
     std::size_t numControlPoints() const {
         return m_ncpts;
