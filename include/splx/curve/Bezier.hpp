@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 #include <splx/internal/combinatorics.hpp>
 #include <splx/internal/bezier.hpp>
 
@@ -42,6 +43,7 @@ class Bezier : public ParametricCurve<T, DIM> {
           + std::to_string(m_a)
         );
       }
+
     }
 
     Bezier(T a) : Base(CurveType::BEZIER), m_a(a) {
@@ -73,11 +75,27 @@ class Bezier : public ParametricCurve<T, DIM> {
 
     }
 
-    Bezier(const Bezier<T, DIM>& rhs) = delete;
-    Bezier(Bezier<T, DIM>&& rhs) = delete;
+    Bezier(const Bezier<T, DIM>& rhs): Base(CurveType::BEZIER), 
+                                       m_a(rhs.m_a), 
+                                       m_controlPoints(rhs.m_controlPoints) { 
 
-    Bezier& operator=(const Bezier<T, DIM>& rhs) = delete;
-    Bezier& operator=(Bezier<T, DIM>&& rhs) = delete;
+    }
+
+
+    Bezier(Bezier<T, DIM>&& rhs): Base(CurveType::BEZIER), 
+                                  m_a(rhs.m_a), 
+                                  m_controlPoints(std::move(rhs.m_controlPoints)) {
+    }
+
+    Bezier& operator=(const Bezier<T, DIM>& rhs) { 
+      this->m_a = rhs.m_a;
+      this->m_controlPoints = rhs.m_controlPoints;
+    }
+
+    Bezier& operator=(Bezier<T, DIM>&& rhs) {
+      this->m_a = rhs.m_a;
+      this->m_controlPoints = std::move(rhs.m_controlPoints);
+    }
 
     std::size_t numControlPoints() const override {
       return m_controlPoints.size();
