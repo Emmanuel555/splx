@@ -25,6 +25,16 @@ public:
 
     }
 
+    Row evalBasisRow(unsigned int d, T u, unsigned int k) {
+        Row coeff(this->numControlPoints() * DIM);
+        coeff.setZero();
+
+        Row r = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
+        coeff.block(0, d*this->numControlPoints(), 1, this->numControlPoints()) = r;
+
+        return coeff;
+    }
+
     void addIntegratedSquaredDerivativeCost(unsigned int k, T lambda) override {
         if(k >= this->numControlPoints()) return;
 
@@ -121,7 +131,10 @@ public:
             for(unsigned int j = 0; j < DIM; j++) {
                 cpt(j) = solution(j * this->numControlPoints() + i);
             }
+            cpts.push_back(cpt);
         }
+
+        return cpts;
     }
 
 private:

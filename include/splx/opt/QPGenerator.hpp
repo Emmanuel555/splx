@@ -19,9 +19,19 @@ public:
     using Matrix = typename _ParametricCurve::Matrix;
     using Vector = typename _ParametricCurve::Vector;
 
+    using Row = splx::Row<T>;
+
     QPGenerator(std::size_t n, T a): m_ncpts(n), m_a(a), m_problem(n * DIM) {
 
     }
+
+    /**
+    * the row that must be multiplied with the decision variables to get the
+    * dimension d of the k^th derivative of the curve at parameter u
+    *
+    * this is provided for piecewise curve continuity constraint generation
+    */
+    virtual Row evalBasisRow(unsigned int d, T u, unsigned int k) = 0;
 
     /**
     *   adds the cost lambda * \int_{0}^{m_a} ||df^k(u)/du^k||_2^2 du

@@ -114,6 +114,9 @@ public:
         return m_pieces[idx]->eval(u, k);
     }
 
+    T maxParameter() const {
+        return m_cumulativeParameters.back();
+    }
 
 private:
     std::vector<std::shared_ptr<_ParametricCurve>> m_pieces;

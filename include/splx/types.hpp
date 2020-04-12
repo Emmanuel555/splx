@@ -17,6 +17,9 @@ using VectorDIM = Eigen::Matrix<T, DIM, 1>;
 template<typename T>
 using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
 
+template<typename T, unsigned int DIM>
+using Hyperplane = Eigen::Hyperplane<T, DIM>;
+
 using Index = Eigen::Index;
 
 }
