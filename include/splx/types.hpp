@@ -22,6 +22,9 @@ using Hyperplane = Eigen::Hyperplane<T, DIM>;
 
 using Index = Eigen::Index;
 
+template<typename T, unsigned int DIM>
+using AlignedBox = Eigen::AlignedBox<T, DIM>;
+
 }
 
 #endif

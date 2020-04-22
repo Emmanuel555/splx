@@ -8,6 +8,165 @@
 namespace splx {
 
 template<typename T, unsigned int DIM>
+class BezierQPOperations : public QPOperations<T, DIM> {
+public:
+    using _Base = QPOperations<T, DIM>;
+    using VectorDIM = splx::VectorDIM<T, DIM>;
+    using Row = splx::Row<T>;
+    using Vector = splx::Vector<T>;
+    using Index = splx::Index;
+    using Matrix = splx::Matrix<T>;
+    using Hyperplane = splx::Hyperplane<T, DIM>;
+    using AlignedBox = splx::AlignedBox<T, DIM>;
+
+    BezierQPOperations(Index ncpts, T a) : _Base(ncpts * DIM), m_ncpts(ncpts), m_a(a) {
+
+    }
+
+    ~BezierQPOperations() {
+
+    }
+
+    Row evalBasisRow(unsigned int d, T u, unsigned int k) const override {
+        Row coeff(_Base::numDecisionVariables());
+        coeff.setZero();
+
+        Row r = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
+        coeff.block(0, d*this->numControlPoints(), 1, this->numControlPoints()) = r;
+
+        return coeff;
+    };
+
+    std::pair<Matrix, Vector> integratedSquaredDerivativeCost(unsigned int k, T lambda) const override {
+        Matrix Q(_Base::numDecisionVariables(), _Base::numDecisionVariables());
+        Q.setZero();
+        Vector c(_Base::numDecisionVariables());
+        c.setZero();
+
+
+        if(k <= this->degree()) {
+            Matrix bern = splx::internal::bezier::bernsteinCoefficientMatrix(this->degree(), this->maxParameter(), k);
+
+            Matrix SQI(this->numControlPoints(), this->numControlPoints());
+            SQI.setZero();
+
+            for(Index i = 0; i < this->numControlPoints(); i++) {
+                for(Index j = 0; j < this->numControlPoints(); j++) {
+                    SQI(i, j) = splx::internal::pow(this->maxParameter(), i + j + 1) / (i+j+1);
+                }
+            }
+            
+            Matrix cost = 2 * lambda * bern * SQI * bern.transpose();
+
+            
+
+            for(unsigned int i = 0; i < DIM; i++) {
+                Q.block(i*this->numControlPoints(), 
+                            i*this->numControlPoints(), 
+                            this->numControlPoints(), 
+                            this->numControlPoints()) = cost;
+            }
+
+        }
+
+        
+        return std::make_pair(Q, c);
+    };
+
+
+    std::pair<Matrix, Vector> evalCost(T u, unsigned int k, const VectorDIM& target, T lambda) const override {
+        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
+        Matrix Qext = 2 * lambda * basis.transpose() * basis;
+        Matrix Qbig(_Base::numDecisionVariables(), _Base::numDecisionVariables());
+        Qbig.setZero();
+        Vector cext = -2 * lambda * basis.transpose();
+        Vector cbig(_Base::numDecisionVariables());
+        cbig.setZero();
+
+        for(unsigned int i = 0; i < DIM; i++) {
+            Qbig.block(i*this->numControlPoints(), 
+                       i*this->numControlPoints(), 
+                       this->numControlPoints(), 
+                       this->numControlPoints()) = Qext;
+
+            cbig.block(i*this->numControlPoints(), 0, this->numControlPoints(), 1) = cext * target(i);
+        }
+
+        return std::make_pair(Qbig, cbig);
+    }
+
+
+    std::vector<std::tuple<Vector, T, T>> evalConstraint(T u, unsigned int k, const VectorDIM& target) const override {
+        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
+        std::vector<std::tuple<Vector, T, T>> constraints;
+        for(unsigned int i = 0; i < DIM; i++) {
+            Row coeff(_Base::numDecisionVariables());
+            coeff.setZero();
+            coeff.block(0, i*this->numControlPoints(), 1, this->numControlPoints()) = basis;
+            constraints.emplace_back(coeff, target(i), target(i));
+        }
+        return constraints;
+    }
+
+    std::vector<std::tuple<Vector, T, T>> hyperplaneConstraintAll(const Hyperplane& hp) const override {
+        std::vector<std::tuple<Vector, T, T>> constraints;
+        for(Index i = 0; i < this->numControlPoints(); i++) {
+            Row coeff(_Base::numDecisionVariables());
+            coeff.setZero();
+            for(Index j = 0; j < DIM; j++) {
+                coeff(j * this->numControlPoints() + i) = hp.normal()(j);
+            }
+            constraints.emplace_back(coeff, std::numeric_limits<T>::lowest(), -hp.offset());
+        }
+        return constraints;
+    };
+
+    std::vector<std::tuple<Vector, T, T>> hyperplaneConstraintAt(T u, const Hyperplane& hp) const override {
+        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, 0);
+
+        Row coeff(this->numControlPoints() * DIM);
+        for(Index i = 0; i < DIM; i++) {
+            coeff.block(0, i*this->numControlPoints(), 1, this->numControlPoints()) = basis * hp.normal()(i);
+        }
+
+        return {{coeff, std::numeric_limits<T>::lowest(), -hp.offset()}};
+    }
+
+    std::pair<Vector, Vector> boundingBoxConstraint(const AlignedBox& bbox) const override {
+        Vector lbx(_Base::numDecisionVariables());
+        Vector ubx(_Base::numDecisionVariables());
+        for(Index j = 0; j < DIM; j++) {
+            for(Index i = 0; i < this->numControlPoints(); i++) {
+                lbx(j * this->numControlPoints() + i, bbox.min()(j));
+                ubx(j * this->numControlPoints() + i, bbox.max()(j));
+            }
+        }
+        return std::make_pair(lbx, ubx);
+    };
+
+    T maxParameter() const { 
+        return m_a; 
+    }
+    void maxParameter(T a) { 
+        m_a = a; 
+    }
+    Index numControlPoints() const { 
+        return m_ncpts; 
+    }
+    void numControlPoints(Index ncpts) const { 
+        m_ncpts = ncpts; 
+        _Base::numDecisionVariables(ncpts); 
+    }
+    Index degree() const {
+        return this->numControlPoints() - 1;
+    }
+
+private:
+    Index m_ncpts;
+    T m_a;
+};
+
+template<typename T, unsigned int DIM>
 class BezierQPGenerator : public QPGenerator<T, DIM> {
 public:
     using Base = QPGenerator<T, DIM>;
@@ -20,128 +179,51 @@ public:
     using ControlPoints = typename Base::ControlPoints;
 
     using Row = typename splx::Row<T>;
+    using AlignedBox = splx::AlignedBox<T, DIM>;
 
-    BezierQPGenerator(std::size_t ncpts, T a): Base(ncpts, a) {
+    using _BezierQPOperations = BezierQPOperations<T, DIM>;
+
+    BezierQPGenerator(Index ncpts, T a): Base(ncpts * DIM), m_operations(ncpts, a) {
 
     }
 
-    Row evalBasisRow(unsigned int d, T u, unsigned int k) {
-        Row coeff(this->numControlPoints() * DIM);
-        coeff.setZero();
-
-        Row r = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
-        coeff.block(0, d*this->numControlPoints(), 1, this->numControlPoints()) = r;
-
-        return coeff;
-    }
 
     void addIntegratedSquaredDerivativeCost(unsigned int k, T lambda) override {
-        if(k >= this->numControlPoints()) return;
-
-        Matrix bern = splx::internal::bezier::bernsteinCoefficientMatrix(this->degree(), this->maxParameter(), k);
-
-        Matrix SQI(this->numControlPoints(), this->numControlPoints());
-        SQI.setZero();
-
-        for(Index i = 0; i < this->numControlPoints(); i++) {
-            for(Index j = 0; j < this->numControlPoints(); j++) {
-                SQI(i, j) = splx::internal::pow(this->maxParameter(), i + j + 1) / (i+j+1);
-            }
-        }
-        
-        Matrix cost = 2 * lambda * bern * SQI * bern.transpose();
-
-        Matrix Qcost(this->numControlPoints() * DIM, this->numControlPoints() * DIM);
-        Qcost.setZero();
-
-        for(unsigned int i = 0; i < DIM; i++) {
-            Qcost.block(i*this->numControlPoints(), 
-                        i*this->numControlPoints(), 
-                        this->numControlPoints(), 
-                        this->numControlPoints()) = cost;
-        }
-
-        Base::m_problem.add_Q(Qcost);
+        auto [Q, c] = m_operations.integratedSquaredDerivativeCost(k, lambda);
+        Base::m_problem.add_Q(Q);
+        Base::m_problem.add_c(c);
     }
 
     void addEvalCost(T u, unsigned int k, const VectorDIM& target, T lambda) override {
-        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
-        Matrix Qext = 2 * lambda * basis.transpose() * basis;
-        Matrix Qbig(this->numControlPoints() * DIM, this->numControlPoints() * DIM);
-        Qbig.setZero();
-        Vector cext = -2 * lambda * basis.transpose();
-        Vector cbig(this->numControlPoints() * DIM);
-        cbig.setZero();
-        for(unsigned int i = 0; i < DIM; i++) {
-            Qbig.block(i*this->numControlPoints(), 
-                       i*this->numControlPoints(), 
-                       this->numControlPoints(), 
-                       this->numControlPoints()) = Qext;
-
-            cbig.block(i*this->numControlPoints(), 0, this->numControlPoints(), 1) = cext * target(i);
-        }
-
-        Base::m_problem.add_Q(Qbig);
-        Base::m_problem.add_c(cbig);
+        auto [Q, c] = m_operations.evalCost(u, k, target, lambda);
+        Base::m_problem.add_Q(Q);
+        Base::m_problem.add_c(c);
     }
 
     void addEvalConstraint(T u, unsigned int k, const VectorDIM& target) override {
-        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
-        for(unsigned int i = 0; i < DIM; i++) {
-            Row coeff(this->numControlPoints() * DIM);
-            coeff.setZero();
-            coeff.block(0, i*this->numControlPoints(), 1, this->numControlPoints()) = basis;
-            Base::m_problem.add_constraint(coeff, target(i), target(i));
-        }
+        auto constraints = m_operations.evalConstraint(u, k, target);
+        Base::addConstraints(constraints);
     }
 
     void addHyperplaneConstraintAll(const Hyperplane& hp) override {
-        for(Index i = 0; i < Base::m_ncpts; i++) {
-            Row coeff(this->numControlPoints() * DIM);
-            coeff.setZero();
-            for(Index j = 0; j < DIM; j++) {
-                coeff(j * this->numControlPoints() + i) = hp.normal()(j);
-            }
-            Base::m_problem.add_constraint(coeff, std::numeric_limits<T>::lowest(), -hp.offset());
-        }
+        auto constraints = m_operations.hyperplaneConstraintAll(hp);
+        Base::addConstraints(constraints);
     }
 
     void addHyperplaneConstraintAt(T u, const Hyperplane& hp) override {
-        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, 0);
-
-        Row coeff(this->numControlPoints() * DIM);
-        for(Index i = 0; i < DIM; i++) {
-            coeff.block(0, i*this->numControlPoints(), 1, this->numControlPoints()) = basis * hp.normal()(i);
-        }
-        Base::m_problem.add_constraint(coeff, std::numeric_limits<T>::lowest(), -hp.offset());
+        auto constraints = m_operations.hyperplaneConstraintAt(u, hp);
+        Base::addConstraints(constraints);
     }
 
-    void addControlPointLimits(const VectorDIM& lb, const VectorDIM& ub) override {
-        for(Index j = 0; j < DIM; j++) {
-            for(Index i = 0; i < this->numControlPoints(); i++) {
-                Base::m_problem.set_var_limits(j * this->numControlPoints() + i, lb(j), ub(j));
-            }
+    void addBoundingBoxConstraint(const AlignedBox& bbox) override {
+        auto [lbx, ubx] = m_operations.boundingBoxConstraint(bbox);
+        for(Index i = 0; i < m_operations.numDecisionVariables(); i++) {
+            Base::m_problem.set_var_limits(i, lbx(i), ubx(i));
         }
-    }
-
-    ControlPoints controlPoints(const Vector& solution) const override {
-        ControlPoints cpts;
-        for(unsigned int i = 0; i < Base::m_ncpts; i++) {
-            Vector cpt(DIM);
-            for(unsigned int j = 0; j < DIM; j++) {
-                cpt(j) = solution(j * this->numControlPoints() + i);
-            }
-            cpts.push_back(cpt);
-        }
-
-        return cpts;
     }
 
 private:
-
-    unsigned int degree() const {
-        return this->numControlPoints() - 1;
-    }
+    _BezierQPOperations m_operations;
 
 };
 
