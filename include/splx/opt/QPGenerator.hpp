@@ -82,6 +82,12 @@ public:
     virtual std::pair<Vector, Vector> boundingBoxConstraint(
             const AlignedBox& bbox) const = 0;
 
+    /*
+    * Given solution vector convert it to the corresponding parametric curve
+    */
+    virtual std::shared_ptr<_ParametricCurve> extractCurve(
+                const Vector& soln) const = 0;
+
     Index numDecisionVariables() const { return m_ndecisionvars; }
     void numDecisionVariables(Index ndvar) { m_ndecisionvars = ndvar; }
 
@@ -200,6 +206,8 @@ public:
     */
     virtual void addBoundingBoxConstraint(const AlignedBox& bbox) = 0;
 
+    virtual std::shared_ptr<_ParametricCurve> extractCurve(
+            const Vector& soln) const = 0;
 
     const Problem& getProblem() const {
         return m_problem;

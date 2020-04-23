@@ -7,6 +7,7 @@
 #include <splx/types.hpp>
 #include <splx/curve/PiecewiseCurve.hpp>
 #include <splx/opt/BezierQPGenerator.hpp>
+#include <absl/strings/str_cat.h>
 
 namespace splx {
 
@@ -18,11 +19,13 @@ public:
     using _Problem = QPWrappers::Problem<T>;
     using Row = splx::Row<T>;
     using VectorDIM = splx::VectorDIM<T, DIM>;
+    using Vector = splx::Vector<T>;
     using Hyperplane = splx::Hyperplane<T, DIM>;
     using AlignedBox = splx::AlignedBox<T, DIM>;
     using Index = splx::Index;
     using Matrix = splx::Matrix<T>;
     using _QPOperations = QPOperations<T, DIM>;
+    using _PiecewiseCurve = PiecewiseCurve<T, DIM>;
 
     PiecewiseCurveQPGenerator() : m_problem(0) {}
 
@@ -205,6 +208,30 @@ public:
         }
     }
 
+    _PiecewiseCurve extractCurve(const Vector& soln) {
+        if(soln.rows() != this->numDecisionVariables()) {
+            throw std::domain_error(
+                absl::StrCat(
+                    "number of decision variables does not match. given: ",
+                    soln.rows(),
+                    ", required: ",
+                    this->numDecisionVariables()
+                )
+            );
+        }
+
+        _PiecewiseCurve piecewise;
+        for(std::size_t i = 0; i < this->numPieces(); i++) {
+            Index piece_numdvars = m_operations[i]->numDecisionVariables();
+            Index piece_dvars_start = 
+                    (i==0 ? 0 : m_cumulativeDecisionVars[i-1]);
+            
+            Vector dvars = soln.block(piece_dvars_start, 0, piece_numdvars, 1);
+            piecewise.addPiece(m_operations[i]->extractCurve(dvars));
+        }
+
+        return piecewise;
+    }
 
 private:
     std::vector<std::shared_ptr<_QPOperations>> m_operations;

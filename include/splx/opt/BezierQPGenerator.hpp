@@ -3,6 +3,7 @@
 #include <splx/opt/QPGenerator.hpp>
 #include <splx/internal/bezier.hpp>
 #include <splx/types.hpp>
+#include <absl/strings/str_cat.h>
 
 
 namespace splx {
@@ -18,6 +19,8 @@ public:
     using Matrix = splx::Matrix<T>;
     using Hyperplane = splx::Hyperplane<T, DIM>;
     using AlignedBox = splx::AlignedBox<T, DIM>;
+    using _ParametricCurve = ParametricCurve<T, DIM>;
+    using _Bezier = Bezier<T, DIM>;
 
     BezierQPOperations(Index ncpts, T a) 
         : _Base(ncpts * DIM, a), m_ncpts(ncpts) {
@@ -220,8 +223,36 @@ public:
                 )
             );
         }
-        
+
         return this->numControlPoints() - 1;
+    }
+
+    std::shared_ptr<_ParametricCurve> extractCurve(
+            const Vector& soln) const override { 
+
+        if(soln.rows() != _Base::numDecisionVariables()) {
+            throw std::domain_error(
+                absl::StrCat(
+                    "number of decision variables does not match. given: ",
+                    soln.rows(),
+                    ", required: ",
+                    _Base::numDecisionVariables()
+                )
+            );
+        }
+
+        typename _Bezier::ControlPoints cpts;
+        for(Index i = 0; i < this->numControlPoints(); i++) {
+            VectorDIM cpt;
+            for(Index j = 0; j < DIM; j++) {
+                cpt(j) = soln(j*this->numControlPoints() + i);
+            }
+            cpts.push_back(cpt);
+        }
+
+        auto bezptr = std::make_shared<_Bezier>(_Base::maxParameter(), cpts);
+
+        return std::static_pointer_cast<_ParametricCurve>(bezptr);
     }
 
 private:
@@ -286,6 +317,10 @@ public:
         for(Index i = 0; i < m_operations.numDecisionVariables(); i++) {
             Base::m_problem.set_var_limits(i, lbx(i), ubx(i));
         }
+    }
+
+    std::shared_ptr<_ParametricCurve> extractCurve(const Vector& soln) const {
+        return m_operations.extractCurve(soln);
     }
 
 private:

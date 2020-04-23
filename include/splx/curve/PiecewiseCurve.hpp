@@ -43,6 +43,12 @@ public:
         this->addNewCurveMaxParameter(bezptr->maxParameter());
     }
 
+    // add a piece directly
+    void addPiece(std::shared_ptr<_ParametricCurve> pieceptr) {
+        m_pieces.push_back(pieceptr);
+        this->addNewCurveMaxParameter(pieceptr->maxParameter());
+    }
+
     /*
     * Sets a specific piece to the given bezier. Given bezier is copied
     */
@@ -65,6 +71,12 @@ public:
         auto paramptr = std::static_pointer_cast<_ParametricCurve>(bezptr);
         m_pieces[idx] = paramptr;
 
+        this->fixCumulativeParameters(idx);
+    }
+
+    void setPiece(std::size_t idx, std::shared_ptr<_ParametricCurve> pieceptr) {
+        this->pieceIndexCheck(idx);
+        m_pieces[idx] = pieceptr;
         this->fixCumulativeParameters(idx);
     }
 
