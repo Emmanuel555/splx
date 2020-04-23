@@ -19,7 +19,8 @@ public:
     using Hyperplane = splx::Hyperplane<T, DIM>;
     using AlignedBox = splx::AlignedBox<T, DIM>;
 
-    BezierQPOperations(Index ncpts, T a) : _Base(ncpts * DIM), m_ncpts(ncpts), m_a(a) {
+    BezierQPOperations(Index ncpts, T a) 
+        : _Base(ncpts * DIM, a), m_ncpts(ncpts) {
 
     }
 
@@ -28,16 +29,28 @@ public:
     }
 
     Row evalBasisRow(unsigned int d, T u, unsigned int k) const override {
+        _Base::parameterCheck(u);
+        _Base::dimensionIndexCheck(d);
+
         Row coeff(_Base::numDecisionVariables());
         coeff.setZero();
 
-        Row r = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
-        coeff.block(0, d*this->numControlPoints(), 1, this->numControlPoints()) = r;
+        Row r = splx::internal::bezier::getBasisRow(
+                    this->degree(), 
+                    _Base::maxParameter(), 
+                    u, 
+                    k
+        );
+
+        coeff.block(0, d*this->numControlPoints(), 
+                    1, this->numControlPoints()) = r;
 
         return coeff;
     };
 
-    std::pair<Matrix, Vector> integratedSquaredDerivativeCost(unsigned int k, T lambda) const override {
+    std::pair<Matrix, Vector> 
+    integratedSquaredDerivativeCost(unsigned int k, T lambda) const override {
+
         Matrix Q(_Base::numDecisionVariables(), _Base::numDecisionVariables());
         Q.setZero();
         Vector c(_Base::numDecisionVariables());
@@ -45,14 +58,20 @@ public:
 
 
         if(k <= this->degree()) {
-            Matrix bern = splx::internal::bezier::bernsteinCoefficientMatrix(this->degree(), this->maxParameter(), k);
+            Matrix bern = splx::internal::bezier::bernsteinCoefficientMatrix(
+                                    this->degree(), 
+                                    _Base::maxParameter(), 
+                                    k
+            );
 
             Matrix SQI(this->numControlPoints(), this->numControlPoints());
             SQI.setZero();
 
             for(Index i = 0; i < this->numControlPoints(); i++) {
                 for(Index j = 0; j < this->numControlPoints(); j++) {
-                    SQI(i, j) = splx::internal::pow(this->maxParameter(), i + j + 1) / (i+j+1);
+                    SQI(i, j) = splx::internal::pow(
+                                    _Base::maxParameter(), 
+                                    i + j + 1) / (i+j+1);
                 }
             }
             
@@ -74,10 +93,23 @@ public:
     };
 
 
-    std::pair<Matrix, Vector> evalCost(T u, unsigned int k, const VectorDIM& target, T lambda) const override {
-        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
+    std::pair<Matrix, Vector> evalCost(T u, unsigned int k, 
+                                       const VectorDIM& target, 
+                                       T lambda) const override {
+
+        _Base::parameterCheck(u);
+
+        Row basis = splx::internal::bezier::getBasisRow(
+                            this->degree(), 
+                            _Base::maxParameter(), 
+                            u, 
+                            k
+        );
+
         Matrix Qext = 2 * lambda * basis.transpose() * basis;
-        Matrix Qbig(_Base::numDecisionVariables(), _Base::numDecisionVariables());
+        Matrix Qbig(_Base::numDecisionVariables(), 
+                    _Base::numDecisionVariables());
+
         Qbig.setZero();
         Vector cext = -2 * lambda * basis.transpose();
         Vector cbig(_Base::numDecisionVariables());
@@ -89,50 +121,78 @@ public:
                        this->numControlPoints(), 
                        this->numControlPoints()) = Qext;
 
-            cbig.block(i*this->numControlPoints(), 0, this->numControlPoints(), 1) = cext * target(i);
+            cbig.block(i*this->numControlPoints(), 
+                       0, this->numControlPoints(), 1) = cext * target(i);
         }
 
         return std::make_pair(Qbig, cbig);
     }
 
 
-    std::vector<std::tuple<Vector, T, T>> evalConstraint(T u, unsigned int k, const VectorDIM& target) const override {
-        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, k);
-        std::vector<std::tuple<Vector, T, T>> constraints;
+    std::vector<std::tuple<Row, T, T>> evalConstraint(
+                T u, unsigned int k, const VectorDIM& target) const override {
+
+        _Base::parameterCheck(u);
+
+        Row basis = splx::internal::bezier::getBasisRow(
+                                    this->degree(), 
+                                    _Base::maxParameter(), 
+                                    u, 
+                                    k
+        );
+
+        std::vector<std::tuple<Row, T, T>> constraints;
         for(unsigned int i = 0; i < DIM; i++) {
             Row coeff(_Base::numDecisionVariables());
             coeff.setZero();
-            coeff.block(0, i*this->numControlPoints(), 1, this->numControlPoints()) = basis;
+            coeff.block(0, i*this->numControlPoints(), 
+                        1, this->numControlPoints()) = basis;
             constraints.emplace_back(coeff, target(i), target(i));
         }
         return constraints;
     }
 
-    std::vector<std::tuple<Vector, T, T>> hyperplaneConstraintAll(const Hyperplane& hp) const override {
-        std::vector<std::tuple<Vector, T, T>> constraints;
+    std::vector<std::tuple<Row, T, T>> hyperplaneConstraintAll(
+                    const Hyperplane& hp) const override {
+
+        std::vector<std::tuple<Row, T, T>> constraints;
         for(Index i = 0; i < this->numControlPoints(); i++) {
             Row coeff(_Base::numDecisionVariables());
             coeff.setZero();
             for(Index j = 0; j < DIM; j++) {
                 coeff(j * this->numControlPoints() + i) = hp.normal()(j);
             }
-            constraints.emplace_back(coeff, std::numeric_limits<T>::lowest(), -hp.offset());
+            constraints.emplace_back(coeff, 
+                                     std::numeric_limits<T>::lowest(), 
+                                     -hp.offset()
+            );
         }
         return constraints;
     };
 
-    std::vector<std::tuple<Vector, T, T>> hyperplaneConstraintAt(T u, const Hyperplane& hp) const override {
-        Row basis = splx::internal::bezier::getBasisRow(this->degree(), this->maxParameter(), u, 0);
+    std::vector<std::tuple<Row, T, T>> hyperplaneConstraintAt(
+                                    T u, const Hyperplane& hp) const override {
+
+        _Base::parameterCheck(u);
+
+        Row basis = splx::internal::bezier::getBasisRow(
+                            this->degree(), 
+                            _Base::maxParameter(), 
+                            u, 
+                            0
+        );
 
         Row coeff(this->numControlPoints() * DIM);
         for(Index i = 0; i < DIM; i++) {
-            coeff.block(0, i*this->numControlPoints(), 1, this->numControlPoints()) = basis * hp.normal()(i);
+            coeff.block(0, i*this->numControlPoints(), 
+                        1, this->numControlPoints()) = basis * hp.normal()(i);
         }
 
         return {{coeff, std::numeric_limits<T>::lowest(), -hp.offset()}};
     }
 
-    std::pair<Vector, Vector> boundingBoxConstraint(const AlignedBox& bbox) const override {
+    std::pair<Vector, Vector> boundingBoxConstraint(
+                        const AlignedBox& bbox) const override {
         Vector lbx(_Base::numDecisionVariables());
         Vector ubx(_Base::numDecisionVariables());
         for(Index j = 0; j < DIM; j++) {
@@ -144,26 +204,28 @@ public:
         return std::make_pair(lbx, ubx);
     };
 
-    T maxParameter() const { 
-        return m_a; 
-    }
-    void maxParameter(T a) { 
-        m_a = a; 
-    }
     Index numControlPoints() const { 
         return m_ncpts; 
     }
     void numControlPoints(Index ncpts) const { 
         m_ncpts = ncpts; 
-        _Base::numDecisionVariables(ncpts); 
+        _Base::numDecisionVariables(ncpts * DIM); 
     }
     Index degree() const {
+        if(this->numControlPoints() == 0) {
+            throw std::domain_error(
+                absl::StrCat(
+                    "degree not defined for a bezier "
+                     "curve with 0 control points"
+                )
+            );
+        }
+        
         return this->numControlPoints() - 1;
     }
 
 private:
     Index m_ncpts;
-    T m_a;
 };
 
 template<typename T, unsigned int DIM>
@@ -183,7 +245,9 @@ public:
 
     using _BezierQPOperations = BezierQPOperations<T, DIM>;
 
-    BezierQPGenerator(Index ncpts, T a): Base(ncpts * DIM), m_operations(ncpts, a) {
+    BezierQPGenerator(Index ncpts, T a): 
+                    Base(ncpts * DIM), 
+                    m_operations(ncpts, a) {
 
     }
 
@@ -194,13 +258,15 @@ public:
         Base::m_problem.add_c(c);
     }
 
-    void addEvalCost(T u, unsigned int k, const VectorDIM& target, T lambda) override {
+    void addEvalCost(T u, unsigned int k, 
+                     const VectorDIM& target, T lambda) override {
         auto [Q, c] = m_operations.evalCost(u, k, target, lambda);
         Base::m_problem.add_Q(Q);
         Base::m_problem.add_c(c);
     }
 
-    void addEvalConstraint(T u, unsigned int k, const VectorDIM& target) override {
+    void addEvalConstraint(T u, unsigned int k, 
+                           const VectorDIM& target) override {
         auto constraints = m_operations.evalConstraint(u, k, target);
         Base::addConstraints(constraints);
     }
