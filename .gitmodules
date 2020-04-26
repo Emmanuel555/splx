@@ -1,6 +1,9 @@
-[submodule "third_party/qpOASES"]
-	path = third_party/qpOASES
-	url = http://github.com/whoenig/qpOASES
-[submodule "third_party/Catch2"]
-	path = third_party/Catch2
-	url = https://github.com/catchorg/Catch2
+[submodule "third_party/qp_wrappers"]
+	path = third_party/qp_wrappers
+	url = https://github.com/USC-ACTLab/qp_wrappers
+[submodule "test/Catch2"]
+	path = test/Catch2
+	url = https://github.com/catchorg/Catch2/
+[submodule "third_party/abseil-cpp"]
+	path = third_party/abseil-cpp
+	url = https://github.com/abseil/abseil-cpp
