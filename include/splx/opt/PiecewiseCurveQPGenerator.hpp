@@ -93,6 +93,34 @@ public:
         return m_cumulativeDecisionVars.size();
     }
 
+    std::vector<T> pieceMaxParameters() const {
+        std::vector<T> piece_max_params;
+        for(const auto piece_opt : m_operations) {
+            piece_max_params.push_back(piece_opt->maxParameter());
+        }
+        return piece_max_params;
+    }
+
+    void setPieceMaxParameters(const std::vector<T>& new_max_params) const {
+        if(new_max_params.size() != m_operations.size()) {
+            throw std::domain_error(
+                absl::StrCat(
+                    "new max parameters size does not match number of pieces",
+                    ", number of pieces: ",
+                    m_operations.size(),
+                    ", given number of max parameters: ",
+                    new_max_params.size()
+                )
+            );
+        }
+
+        for(std::size_t i = 0; i < m_operations.size(); i++) {
+            m_operations[i]->maxParameter(new_max_params[i]);
+        }
+
+        this->fixCumulativeStructures(0);
+    }
+
     Index numDecisionVariables() const {
         if(m_cumulativeDecisionVars.empty()) return 0;
 
@@ -231,6 +259,18 @@ public:
         }
 
         return piecewise;
+    }
+
+
+    void resetProblem() {
+        m_problem.reset();
+    }
+
+    void resetGenerator() {
+        m_operations.clear();
+        m_cumulativeMaxParameters.clear();
+        m_cumulativeDecisionVars.clear();
+        this->resetProblem();
     }
 
 private:
