@@ -88,6 +88,13 @@ public:
     virtual std::shared_ptr<_ParametricCurve> extractCurve(
                 const Vector& soln) const = 0;
 
+    /*
+     * Get decision variables for the curve that is equivalent to the segment
+     * from 'from' to 'to'.
+     */
+    virtual Vector getDVarsForSegment(
+            const VectorDIM& from, const VectorDIM& to) const = 0;
+
     Index numDecisionVariables() const { return m_ndecisionvars; }
     void numDecisionVariables(Index ndvar) { m_ndecisionvars = ndvar; }
 

@@ -207,6 +207,22 @@ public:
         return std::make_pair(lbx, ubx);
     };
 
+    Vector getDVarsForSegment(
+            const VectorDIM& from, const VectorDIM& to) const override {
+        VectorDIM step = (to - from) / (this->numControlPoints()-1);
+        Vector dvars(this->numDecisionVariables());
+        for(Index i = 0; i < this->numControlPoints(); i++) {
+            VectorDIM cpt = from + step * i;
+            if(i == 0) cpt = from;
+            if(i == this->numControlPoints() - 1) cpt = to;
+
+            for(unsigned int j = 0; j < DIM; j++) {
+                dvars(j *  this->numControlPoints() + i) = cpt(j);
+            }
+        }
+        return dvars;
+    }
+
     Index numControlPoints() const { 
         return m_ncpts; 
     }

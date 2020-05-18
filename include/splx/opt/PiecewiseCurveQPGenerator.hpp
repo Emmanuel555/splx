@@ -8,6 +8,7 @@
 #include <splx/curve/PiecewiseCurve.hpp>
 #include <splx/opt/BezierQPGenerator.hpp>
 #include <absl/strings/str_cat.h>
+#include <Eigen/StdVector>
 
 namespace splx {
 
@@ -26,6 +27,8 @@ public:
     using Matrix = splx::Matrix<T>;
     using _QPOperations = QPOperations<T, DIM>;
     using _PiecewiseCurve = PiecewiseCurve<T, DIM>;
+    using StdVectorVectorDIM
+        = std::vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>>;
 
     PiecewiseCurveQPGenerator() : m_problem(0) {}
 
@@ -119,6 +122,7 @@ public:
         }
 
         this->fixCumulativeStructures(0);
+        m_problem = QPWrappers::Problem<T>(this->numDecisionVariables());
     }
 
     Index numDecisionVariables() const {
@@ -236,6 +240,37 @@ public:
         }
     }
 
+    Vector getDVarsForSegments(const StdVectorVectorDIM& segments) const {
+        if(segments.size() != this->numPieces() + 1) {
+            throw std::domain_error
+            (
+                absl::StrCat
+                (
+                    "number of segments is not equal to the number of pieces",
+                    ", segment count: ",
+                    segments.size() - 1,
+                    ", piece count: ",
+                    this->numPieces()
+                )
+            );
+        }
+
+        Vector res(this->numDecisionVariables());
+
+        for(std::size_t i = 0; i < segments.size() - 1; i++) {
+            Index piece_dvars_start
+                = (i == 0 ? 0: m_cumulativeDecisionVars[i-1]);
+            Index piece_numdvars = m_operations[i]->numDecisionVariables();
+            res.block(piece_dvars_start, 0, piece_numdvars, 1)
+                = m_operations[i]->getDVarsForSegment
+            (
+                        segments[i],
+                        segments[i+1]
+            );
+        }
+
+        return res;
+    }
     _PiecewiseCurve extractCurve(const Vector& soln) {
         if(soln.rows() != this->numDecisionVariables()) {
             throw std::domain_error(
