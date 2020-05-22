@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 3.1)
-project(splx_tests)
-
 function(generate_test testnamebase)
 add_executable(
     ${testnamebase}
