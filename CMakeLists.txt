@@ -11,7 +11,7 @@ add_library(splx INTERFACE)
 target_link_libraries(
 splx 
 INTERFACE
-qp_wrappers
+qp_wrappers_problem
 absl::strings
 )
 target_include_directories(

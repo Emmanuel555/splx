@@ -17,6 +17,7 @@ class PiecewiseCurveQPGenerator {
 public:
     using _QPGenerator = QPGenerator<T, DIM>;
     using _BezierQPGenerator = BezierQPGenerator<T, DIM>;
+    using _BezierQPOperations = BezierQPOperations<T, DIM>;
     using _Problem = QPWrappers::Problem<T>;
     using Row = splx::Row<T>;
     using VectorDIM = splx::VectorDIM<T, DIM>;
@@ -81,14 +82,14 @@ public:
     }
 
     void addBezier(Index ncpts, T a) {
-        auto bezptr = std::make_shared<BezierQPGenerator>(ncpts, a);
-        auto optptr = std::static_pointer_cast<QPGenerator>(bezptr);
+        auto bezptr = std::make_shared<_BezierQPOperations>(ncpts, a);
+        auto optptr = std::static_pointer_cast<_QPOperations>(bezptr);
         this->addPiece(optptr);
     }
 
     void setBezier(std::size_t idx, Index ncpts, T a) {
-        auto bezptr = std::make_shared<BezierQPGenerator>(ncpts, a);
-        auto optptr = std::static_pointer_cast<QPGenerator>(bezptr);
+        auto bezptr = std::make_shared<_BezierQPOperations>(ncpts, a);
+        auto optptr = std::static_pointer_cast<_QPOperations>(bezptr);
         this->setPiece(idx, optptr);
     }
 
