@@ -4,6 +4,7 @@
 #include <splx/internal/bezier.hpp>
 #include <splx/types.hpp>
 #include <absl/strings/str_cat.h>
+#include <splx/curve/Bezier.hpp>
 
 
 namespace splx {

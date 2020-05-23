@@ -105,7 +105,19 @@ public:
         return piece_max_params;
     }
 
-    void setPieceMaxParameters(const std::vector<T>& new_max_params) const {
+    T maxParameter() const {
+        if(m_operations.empty()) {
+            throw std::domain_error(
+                absl::StrCat(
+                    "piecewise curve has no pieces"
+                )
+            );
+        }
+
+        return m_cumulativeMaxParameters.back();
+    }
+
+    void setPieceMaxParameters(const std::vector<T>& new_max_params) {
         if(new_max_params.size() != m_operations.size()) {
             throw std::domain_error(
                 absl::StrCat(
@@ -134,7 +146,7 @@ public:
     
     void addIntegratedSquaredDerivativeCost(unsigned int k, T lambda) {
         Matrix Q(this->numDecisionVariables(), this->numDecisionVariables());
-        Matrix c(this->numDecisionVariables);
+        Vector c(this->numDecisionVariables());
         Q.setZero();
         c.setZero();
 
@@ -142,7 +154,8 @@ public:
             Index dvar_start_idx = (i == 0 ? 0 : m_cumulativeDecisionVars[i-1]);
             Index dvar_count = m_operations[i]->numDecisionVariables();
 
-            auto [Qs, cs] = m_operations[i]->interatedSquaredDerivative(k, lambda);
+            auto [Qs, cs]
+                = m_operations[i]->integratedSquaredDerivativeCost(k, lambda);
             
             Q.block(dvar_start_idx, dvar_start_idx, dvar_count, dvar_count) = Qs;
             c.block(dvar_start_idx, 0, dvar_count, 1) = cs;
@@ -154,7 +167,7 @@ public:
 
     void addEvalCost(T u, unsigned int k, const VectorDIM& target, T lambda) {
         Matrix Q(this->numDecisionVariables(), this->numDecisionVariables());
-        Matrix c(this->numDecisionVariables());
+        Vector c(this->numDecisionVariables());
         Q.setZero();
         c.setZero();
 
@@ -307,6 +320,10 @@ public:
         m_cumulativeMaxParameters.clear();
         m_cumulativeDecisionVars.clear();
         this->resetProblem();
+    }
+
+    const QPWrappers::Problem<T>& getProblem() const {
+        return this->m_problem;
     }
 
 private:

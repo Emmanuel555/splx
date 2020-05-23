@@ -3,6 +3,8 @@
 #include <qp_wrappers/problem.hpp>
 #include <splx/curve/ParametricCurve.hpp>
 #include <absl/strings/str_cat.h>
+#include <splx/types.hpp>
+#include <memory>
 
 namespace splx {
 
@@ -100,7 +102,7 @@ public:
 
     T maxParameter() const { return m_a; }
     void maxParameter(T a) { 
-        this->maxParametrCheck(a);
+        this->maxParameterCheck(a);
         m_a = a; 
     }
 
