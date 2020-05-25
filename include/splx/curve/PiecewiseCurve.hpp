@@ -127,6 +127,7 @@ public:
     }
 
     T maxParameter() const {
+//        std::cout << "num pieces: " << m_pieces.size() <<", size cum: " << m_cumulativeParameters.size() << std::endl;
         return m_cumulativeParameters.back();
     }
 
