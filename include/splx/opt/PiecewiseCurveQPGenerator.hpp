@@ -370,7 +370,12 @@ private:
             first_dvar_index = m_cumulativeDecisionVars[idx-1];
         }
 
-        return {idx, param, first_dvar_index, dvar_count};
+        return {
+            idx,
+            std::min(param, m_operations[idx]->maxParameter()),
+            first_dvar_index,
+            dvar_count
+        };
     }
 
     void addConstraints(const std::vector<std::tuple<Row, T, T>>& cons, 

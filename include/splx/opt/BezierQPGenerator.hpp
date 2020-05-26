@@ -201,8 +201,8 @@ public:
         Vector ubx(_Base::numDecisionVariables());
         for(Index j = 0; j < DIM; j++) {
             for(Index i = 0; i < this->numControlPoints(); i++) {
-                lbx(j * this->numControlPoints() + i, bbox.min()(j));
-                ubx(j * this->numControlPoints() + i, bbox.max()(j));
+                lbx(j * this->numControlPoints() + i) = bbox.min()(j);
+                ubx(j * this->numControlPoints() + i) = bbox.max()(j);
             }
         }
         return std::make_pair(lbx, ubx);
