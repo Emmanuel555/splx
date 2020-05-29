@@ -123,7 +123,10 @@ public:
         if(idx != 0)
             u -= m_cumulativeParameters[idx-1];
 
-        return m_pieces[idx]->eval(u, k);
+        return m_pieces[idx]->eval(
+                std::min(u, m_pieces[idx]->maxParameter()),
+                k
+        );
     }
 
     T maxParameter() const {

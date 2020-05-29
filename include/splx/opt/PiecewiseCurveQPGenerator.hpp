@@ -240,7 +240,7 @@ public:
                             d, m_operations[idx]->maxParameter(), k
             );
             Row coeff2 = m_operations[idx+1]->evalBasisRow(
-                            d, m_operations[idx+1]->maxParameter(), k
+                            d, 0, k
             );
 
             Row coeff(this->numDecisionVariables());
