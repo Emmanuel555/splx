@@ -115,6 +115,7 @@ public:
     // evaluate the kth derivative at piecewise curve at parameter u
     VectorDIM eval(T u, unsigned int k) const {
         this->parameterBoundCheck(u);
+        this->emptyPiecesCheck();
 
         auto idx = std::lower_bound(m_cumulativeParameters.begin(), m_cumulativeParameters.end(), u)
                    - m_cumulativeParameters.begin();
@@ -130,7 +131,7 @@ public:
     }
 
     T maxParameter() const {
-//        std::cout << "num pieces: " << m_pieces.size() <<", size cum: " << m_cumulativeParameters.size() << std::endl;
+        this->emptyPiecesCheck();
         return m_cumulativeParameters.back();
     }
 
