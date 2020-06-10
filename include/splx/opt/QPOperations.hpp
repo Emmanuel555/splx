@@ -1,5 +1,5 @@
-#ifndef SPLX_QPGENERATOR_HPP
-#define SPLX_QPGENERATOR_HPP
+#ifndef SPLX_QPOPERATIONS_HPP
+#define SPLX_QPOPERATIONS_HPP
 #include <qp_wrappers/problem.hpp>
 #include <splx/curve/ParametricCurve.hpp>
 #include <absl/strings/str_cat.h>
@@ -53,11 +53,14 @@ public:
             const VectorDIM& target, T lambda) const = 0;
 
     /**
-    *   returns set of constraints that enforces f^k(u) = target
-    *   each returned constraint it a 3 tuple where
-    *   1st element is row that must be dot producted
-    *   with decision variables, 2nd variable is the
-    *   lower bound the thirt variable is the upper bound
+     *   returns set of constraints that enforces f^k(u) = target
+     *   each returned constraint it a 3 tuple where
+     *   1st element is row that must be dot producted
+     *   with decision variables, 2nd variable is the
+     *   lower bound the third variable is the upper bound
+     *
+     *   soft convertible variables sets whether the constraint
+     *   can be converted to a soft constraint if desired
     */
     virtual std::vector<Constraint> evalConstraint(
                     T u, unsigned int k, const VectorDIM& target,
@@ -65,9 +68,12 @@ public:
                     T soft_convertible_weight = T(1)) const = 0;
 
     /*
-    * given hyperplane hp(x) = a_1x_1+a_2x_2+...+a_nx_n + d = 0 
-    * such that n=(a_1, ..., a_n) is the normal,
-    * returns set of constraints that enforces hp(f(u)) <= 0 for all u 
+     * given hyperplane hp(x) = a_1x_1+a_2x_2+...+a_nx_n + d = 0
+     * such that n=(a_1, ..., a_n) is the normal,
+     * returns set of constraints that enforces hp(f(u)) <= 0 for all u
+     *
+     *   soft convertible variables sets whether the constraint
+     *   can be converted to a soft constraint if desired
     */
     virtual std::vector<Constraint> hyperplaneConstraintAll(
                     const Hyperplane& hp,
@@ -75,9 +81,12 @@ public:
                     T soft_convertible_weight = T(1)) const = 0;
 
     /*
-    * given hyperplane hp(x) = a_1x_1+a_2x_2+...+a_nx_n + d = 0 
-    * such that n=(a_1, ..., a_n) is the normal,
-    * returns set of constraints that enforces hp(f(u)) <= 0 at u 
+     * given hyperplane hp(x) = a_1x_1+a_2x_2+...+a_nx_n + d = 0
+     * such that n=(a_1, ..., a_n) is the normal,
+     * returns set of constraints that enforces hp(f(u)) <= 0 at u
+     *
+     *   soft convertible variables sets whether the constraint
+     *   can be converted to a soft constraint if desired
     */
     virtual std::vector<Constraint> hyperplaneConstraintAt(
                 T u, const Hyperplane& hp,
@@ -163,101 +172,8 @@ private:
     T m_a;
 };
 
-template<typename T, unsigned int DIM>
-class QPGenerator {
-public:
-    using _ParametricCurve = ParametricCurve<T, DIM>;
-    using VectorDIM = typename _ParametricCurve::VectorDIM;
-    using Hyperplane = typename _ParametricCurve::Hyperplane;
-    using ControlPoints = typename _ParametricCurve::ControlPoints;
-
-    using Problem = QPWrappers::Problem<T>;
-    using Index = typename Problem::Index;
-
-    using Matrix = typename _ParametricCurve::Matrix;
-    using Vector = typename _ParametricCurve::Vector;
-
-    using Row = splx::Row<T>;
-    using AlignedBox = splx::AlignedBox<T, DIM>;
-
-    using Constraint = splx::Constraint<T>;
-
-    QPGenerator(Index dvar_count): m_problem(dvar_count) {
-
-    }
-
-    /**
-    *   adds the cost lambda * \int_{0}^{m_a} ||df^k(u)/du^k||_2^2 du
-    */
-    virtual void addIntegratedSquaredDerivativeCost(unsigned int k, 
-                                                    T lambda) = 0;
-
-    /**
-    *   adds the cost lambda * ||f^k(u)-target||^2
-    */
-    virtual void addEvalCost(T u, unsigned int k, 
-                             const VectorDIM& target, T lambda) = 0;
-
-    /**
-    *   adds constraint that f^k(u) = target
-    */
-    virtual void addEvalConstraint(T u, unsigned int k, 
-                                   const VectorDIM& target,
-                                   bool soft_convertible = false,
-                                   T soft_convertible_weight = T(1)) = 0;
-
-    /*
-    * given hyperplane hp(x) = a_1x_1+a_2x_2+...+a_nx_n + d = 0 
-    * such that n=(a_1, ..., a_n) is the normal,
-    * add a constraint so that hp(f(u)) <= 0 for all u 
-    */
-    virtual void addHyperplaneConstraintAll(const Hyperplane& hp,
-                                            bool soft_convertible = false,
-                                            T soft_convertible_weight = T(1)) = 0;
-
-    /*
-    * given hyperplane hp(x) = a_1x_1+a_2x_2+...+a_nx_n + d = 0 
-    * such that n=(a_1, ..., a_n) is the normal,
-    * add a constraint so that hp(f(u)) <= 0 at u
-    */
-    virtual void addHyperplaneConstraintAt(T u, const Hyperplane& hp,
-                                           bool soft_convertible = false,
-                                           T soft_convertible_weight = T(1)) = 0;
-
-    /*
-    * Require curve to stay inside the bounding box with lower left corner
-    * lb, and upper left corner ub
-    */
-    virtual void addBoundingBoxConstraint(const AlignedBox& bbox) = 0;
-
-    virtual std::shared_ptr<_ParametricCurve> extractCurve(
-            const Vector& soln) const = 0;
-
-    const Problem& getProblem() const {
-        return m_problem;
-    }
-
-protected:
-    QPWrappers::Problem<T> m_problem;
-
-    void addConstraints(
-                const std::vector<Constraint>& constraints) {
-
-        for(const auto& constraint: constraints) {
-            m_problem.add_constraint(
-                    constraint.coeff,
-                    constraint.lb,
-                    constraint.ub,
-                    constraint.soft_convertible,
-                    constraint.soft_weight
-            );
-        }
-    }
-
-}; // end QPGenerator
-
 
 } // end namespace splx
 
 
-#endif
+#endif // SPLX_QPOPERATIONS_HPP

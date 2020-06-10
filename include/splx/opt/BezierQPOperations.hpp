@@ -1,6 +1,6 @@
 #ifndef SPLX_BEZIERQPGENERATOR_HPP
 #define SPLX_BEZIERQPGENERATOR_HPP
-#include <splx/opt/QPGenerator.hpp>
+#include <splx/opt/QPOperations.hpp>
 #include <splx/internal/bezier.hpp>
 #include <splx/types.hpp>
 #include <absl/strings/str_cat.h>
@@ -287,80 +287,6 @@ private:
     Index m_ncpts;
 };
 
-template<typename T, unsigned int DIM>
-class BezierQPGenerator : public QPGenerator<T, DIM> {
-public:
-    using Base = QPGenerator<T, DIM>;
-    using Index = typename Base::Index;
-    using _ParametricCurve = typename Base::_ParametricCurve;
-    using Vector = typename Base::Vector;
-    using VectorDIM = typename Base::VectorDIM;
-    using Hyperplane = typename Base::Hyperplane;
-    using Matrix = typename Base::Matrix;
-    using ControlPoints = typename Base::ControlPoints;
-
-    using Row = typename splx::Row<T>;
-    using AlignedBox = splx::AlignedBox<T, DIM>;
-
-    using _BezierQPOperations = BezierQPOperations<T, DIM>;
-
-    BezierQPGenerator(Index ncpts, T a): 
-                    Base(ncpts * DIM), 
-                    m_operations(ncpts, a) {
-
-    }
-
-
-    void addIntegratedSquaredDerivativeCost(unsigned int k, T lambda) override {
-        auto [Q, c] = m_operations.integratedSquaredDerivativeCost(k, lambda);
-        Base::m_problem.add_Q(Q);
-        Base::m_problem.add_c(c);
-    }
-
-    void addEvalCost(T u, unsigned int k, 
-                     const VectorDIM& target, T lambda) override {
-        auto [Q, c] = m_operations.evalCost(u, k, target, lambda);
-        Base::m_problem.add_Q(Q);
-        Base::m_problem.add_c(c);
-    }
-
-    void addEvalConstraint(T u, unsigned int k, 
-                           const VectorDIM& target,
-                           bool soft_convertible = false,
-                           T soft_convertible_weight = T(1)) override {
-        auto constraints = m_operations.evalConstraint(u, k, target);
-        Base::addConstraints(constraints);
-    }
-
-    void addHyperplaneConstraintAll(const Hyperplane& hp,
-                                    bool soft_convertible = false,
-                                    T soft_convertible_weight = T(1)) override {
-        auto constraints = m_operations.hyperplaneConstraintAll(hp);
-        Base::addConstraints(constraints);
-    }
-
-    void addHyperplaneConstraintAt(T u, const Hyperplane& hp,
-                                   bool soft_convertible = false,
-                                   T soft_convertible_weight = T(1)) override {
-        auto constraints = m_operations.hyperplaneConstraintAt(u, hp);
-        Base::addConstraints(constraints);
-    }
-
-    void addBoundingBoxConstraint(const AlignedBox& bbox) override {
-        auto [lbx, ubx] = m_operations.boundingBoxConstraint(bbox);
-        for(Index i = 0; i < m_operations.numDecisionVariables(); i++) {
-            Base::m_problem.set_var_limits(i, lbx(i), ubx(i));
-        }
-    }
-
-    std::shared_ptr<_ParametricCurve> extractCurve(const Vector& soln) const {
-        return m_operations.extractCurve(soln);
-    }
-
-private:
-    _BezierQPOperations m_operations;
-
-};
 
 } // end namespace splx;
 

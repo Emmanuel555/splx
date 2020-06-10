@@ -4,7 +4,7 @@
 #include <splx/curve/Bezier.hpp>
 #include <splx/internal/bezier.hpp>
 #include <stdexcept>
-#include <splx/opt/BezierQPGenerator.hpp>
+#include <splx/opt/BezierQPOperations.hpp>
 #include <splx/opt/PiecewiseCurveQPGenerator.hpp>
 
 

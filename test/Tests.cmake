@@ -11,6 +11,5 @@ target_link_libraries(
 endfunction(generate_test)
 
 generate_test(BezierTest)
-generate_test(BezierQPGeneratorTest)
 generate_test(PiecewiseCurveTest)
 generate_test(PiecewiseCurveQPGeneratorTest)

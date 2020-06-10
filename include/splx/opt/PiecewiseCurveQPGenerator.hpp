@@ -2,11 +2,11 @@
 #define SPLX_PIECEWISECURVE_QP_GENERATOR_HPP
 
 #include <qp_wrappers/problem.hpp>
-#include <splx/opt/QPGenerator.hpp>
-#include <splx/opt/BezierQPGenerator.hpp>
+#include <splx/opt/QPOperations.hpp>
+#include <splx/opt/BezierQPOperations.hpp>
 #include <splx/types.hpp>
 #include <splx/curve/PiecewiseCurve.hpp>
-#include <splx/opt/BezierQPGenerator.hpp>
+#include <splx/opt/BezierQPOperations.hpp>
 #include <absl/strings/str_cat.h>
 #include <Eigen/StdVector>
 
@@ -15,8 +15,6 @@ namespace splx {
 template<typename T, unsigned int DIM>
 class PiecewiseCurveQPGenerator {
 public:
-    using _QPGenerator = QPGenerator<T, DIM>;
-    using _BezierQPGenerator = BezierQPGenerator<T, DIM>;
     using _BezierQPOperations = BezierQPOperations<T, DIM>;
     using _Problem = QPWrappers::Problem<T>;
     using Row = splx::Row<T>;
