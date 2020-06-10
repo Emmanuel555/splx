@@ -20,6 +20,7 @@ public:
     using ControlPoints = typename _ParametricCurve::ControlPoints;
     using AlignedBox = splx::AlignedBox<T, DIM>;
     using Hyperplane = splx::Hyperplane<T, DIM>;
+    using Constraint = splx::Constraint<T>;
 
 
     QPOperations(Index dvar_count, T a) : m_ndecisionvars(dvar_count), m_a(a) {
@@ -58,24 +59,30 @@ public:
     *   with decision variables, 2nd variable is the
     *   lower bound the thirt variable is the upper bound
     */
-    virtual std::vector<std::tuple<Row, T, T>> evalConstraint(
-                    T u, unsigned int k, const VectorDIM& target) const = 0;
+    virtual std::vector<Constraint> evalConstraint(
+                    T u, unsigned int k, const VectorDIM& target,
+                    bool soft_convertible = false,
+                    T soft_convertible_weight = T(1)) const = 0;
 
     /*
     * given hyperplane hp(x) = a_1x_1+a_2x_2+...+a_nx_n + d = 0 
     * such that n=(a_1, ..., a_n) is the normal,
     * returns set of constraints that enforces hp(f(u)) <= 0 for all u 
     */
-    virtual std::vector<std::tuple<Row, T, T>> hyperplaneConstraintAll(
-                    const Hyperplane& hp) const = 0;
+    virtual std::vector<Constraint> hyperplaneConstraintAll(
+                    const Hyperplane& hp,
+                    bool soft_convertible = false,
+                    T soft_convertible_weight = T(1)) const = 0;
 
     /*
     * given hyperplane hp(x) = a_1x_1+a_2x_2+...+a_nx_n + d = 0 
     * such that n=(a_1, ..., a_n) is the normal,
     * returns set of constraints that enforces hp(f(u)) <= 0 at u 
     */
-    virtual std::vector<std::tuple<Row, T, T>> hyperplaneConstraintAt(
-                T u, const Hyperplane& hp) const = 0;
+    virtual std::vector<Constraint> hyperplaneConstraintAt(
+                T u, const Hyperplane& hp,
+                bool soft_convertible = false,
+                T soft_convertible_weight = T(1)) const = 0;
 
     /*
     * returns lbx and ubx such that when lbx <= p <= ubx,
@@ -173,6 +180,8 @@ public:
     using Row = splx::Row<T>;
     using AlignedBox = splx::AlignedBox<T, DIM>;
 
+    using Constraint = splx::Constraint<T>;
+
     QPGenerator(Index dvar_count): m_problem(dvar_count) {
 
     }
@@ -193,21 +202,27 @@ public:
     *   adds constraint that f^k(u) = target
     */
     virtual void addEvalConstraint(T u, unsigned int k, 
-                                   const VectorDIM& target) = 0;
+                                   const VectorDIM& target,
+                                   bool soft_convertible = false,
+                                   T soft_convertible_weight = T(1)) = 0;
 
     /*
     * given hyperplane hp(x) = a_1x_1+a_2x_2+...+a_nx_n + d = 0 
     * such that n=(a_1, ..., a_n) is the normal,
     * add a constraint so that hp(f(u)) <= 0 for all u 
     */
-    virtual void addHyperplaneConstraintAll(const Hyperplane& hp) = 0;
+    virtual void addHyperplaneConstraintAll(const Hyperplane& hp,
+                                            bool soft_convertible = false,
+                                            T soft_convertible_weight = T(1)) = 0;
 
     /*
     * given hyperplane hp(x) = a_1x_1+a_2x_2+...+a_nx_n + d = 0 
     * such that n=(a_1, ..., a_n) is the normal,
     * add a constraint so that hp(f(u)) <= 0 at u
     */
-    virtual void addHyperplaneConstraintAt(T u, const Hyperplane& hp) = 0;
+    virtual void addHyperplaneConstraintAt(T u, const Hyperplane& hp,
+                                           bool soft_convertible = false,
+                                           T soft_convertible_weight = T(1)) = 0;
 
     /*
     * Require curve to stay inside the bounding box with lower left corner
@@ -226,13 +241,15 @@ protected:
     QPWrappers::Problem<T> m_problem;
 
     void addConstraints(
-                const std::vector<std::tuple<Row, T, T>>& constraints) {
+                const std::vector<Constraint>& constraints) {
 
         for(const auto& constraint: constraints) {
             m_problem.add_constraint(
-                    std::get<0>(constraint), 
-                    std::get<1>(constraint), 
-                    std::get<2>(constraint)
+                    constraint.coeff,
+                    constraint.lb,
+                    constraint.ub,
+                    constraint.soft_convertible,
+                    constraint.soft_weight
             );
         }
     }

@@ -22,6 +22,7 @@ public:
     using AlignedBox = splx::AlignedBox<T, DIM>;
     using _ParametricCurve = ParametricCurve<T, DIM>;
     using _Bezier = Bezier<T, DIM>;
+    using Constraint = splx::Constraint<T>;
 
     BezierQPOperations(Index ncpts, T a) 
         : _Base(ncpts * DIM, a), m_ncpts(ncpts) {
@@ -133,8 +134,10 @@ public:
     }
 
 
-    std::vector<std::tuple<Row, T, T>> evalConstraint(
-                T u, unsigned int k, const VectorDIM& target) const override {
+    std::vector<Constraint> evalConstraint(
+                T u, unsigned int k, const VectorDIM& target,
+                bool soft_convertible = false,
+                T soft_convertible_weight = T(1)) const override {
 
         _Base::parameterCheck(u);
 
@@ -145,21 +148,24 @@ public:
                                     k
         );
 
-        std::vector<std::tuple<Row, T, T>> constraints;
+        std::vector<Constraint> constraints;
         for(unsigned int i = 0; i < DIM; i++) {
             Row coeff(_Base::numDecisionVariables());
             coeff.setZero();
             coeff.block(0, i*this->numControlPoints(), 
                         1, this->numControlPoints()) = basis;
-            constraints.emplace_back(coeff, target(i), target(i));
+            constraints.emplace_back(coeff, target(i), target(i),
+                    soft_convertible, soft_convertible_weight);
         }
         return constraints;
     }
 
-    std::vector<std::tuple<Row, T, T>> hyperplaneConstraintAll(
-                    const Hyperplane& hp) const override {
+    std::vector<Constraint> hyperplaneConstraintAll(
+                    const Hyperplane& hp,
+                    bool soft_convertible = false,
+                    T soft_convertible_weight = T(1)) const override {
 
-        std::vector<std::tuple<Row, T, T>> constraints;
+        std::vector<Constraint> constraints;
         for(Index i = 0; i < this->numControlPoints(); i++) {
             Row coeff(_Base::numDecisionVariables());
             coeff.setZero();
@@ -168,14 +174,18 @@ public:
             }
             constraints.emplace_back(coeff, 
                                      std::numeric_limits<T>::lowest(), 
-                                     -hp.offset()
+                                     -hp.offset(),
+                                     soft_convertible, soft_convertible_weight
             );
         }
         return constraints;
     };
 
-    std::vector<std::tuple<Row, T, T>> hyperplaneConstraintAt(
-                                    T u, const Hyperplane& hp) const override {
+    std::vector<Constraint> hyperplaneConstraintAt(
+                                    T u, const Hyperplane& hp,
+                                    bool soft_convertible = false,
+                                    T soft_convertible_weight = T(1))
+                                    const override {
 
         _Base::parameterCheck(u);
 
@@ -192,7 +202,8 @@ public:
                         1, this->numControlPoints()) = basis * hp.normal()(i);
         }
 
-        return {{coeff, std::numeric_limits<T>::lowest(), -hp.offset()}};
+        return {{coeff, std::numeric_limits<T>::lowest(), -hp.offset(),
+                        soft_convertible, soft_convertible_weight}};
     }
 
     std::pair<Vector, Vector> boundingBoxConstraint(
@@ -227,7 +238,7 @@ public:
     Index numControlPoints() const { 
         return m_ncpts; 
     }
-    void numControlPoints(Index ncpts) const { 
+    void numControlPoints(Index ncpts) {
         m_ncpts = ncpts; 
         _Base::numDecisionVariables(ncpts * DIM); 
     }
@@ -314,17 +325,23 @@ public:
     }
 
     void addEvalConstraint(T u, unsigned int k, 
-                           const VectorDIM& target) override {
+                           const VectorDIM& target,
+                           bool soft_convertible = false,
+                           T soft_convertible_weight = T(1)) override {
         auto constraints = m_operations.evalConstraint(u, k, target);
         Base::addConstraints(constraints);
     }
 
-    void addHyperplaneConstraintAll(const Hyperplane& hp) override {
+    void addHyperplaneConstraintAll(const Hyperplane& hp,
+                                    bool soft_convertible = false,
+                                    T soft_convertible_weight = T(1)) override {
         auto constraints = m_operations.hyperplaneConstraintAll(hp);
         Base::addConstraints(constraints);
     }
 
-    void addHyperplaneConstraintAt(T u, const Hyperplane& hp) override {
+    void addHyperplaneConstraintAt(T u, const Hyperplane& hp,
+                                   bool soft_convertible = false,
+                                   T soft_convertible_weight = T(1)) override {
         auto constraints = m_operations.hyperplaneConstraintAt(u, hp);
         Base::addConstraints(constraints);
     }

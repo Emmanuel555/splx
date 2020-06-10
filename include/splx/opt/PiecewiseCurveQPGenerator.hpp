@@ -30,6 +30,7 @@ public:
     using _PiecewiseCurve = PiecewiseCurve<T, DIM>;
     using StdVectorVectorDIM
         = std::vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>>;
+    using Constraint = splx::Constraint<T>;
 
     PiecewiseCurveQPGenerator() : m_problem(0) {}
 
@@ -181,32 +182,44 @@ public:
         m_problem.add_c(c);
     }
 
-    void addEvalConstraint(T u, unsigned int k, const VectorDIM& target) {
+    void addEvalConstraint(T u, unsigned int k, const VectorDIM& target,
+                           bool soft_convertible = false,
+                           T soft_convertible_weight = T(1)) {
         auto [idx, param, first_dvar_index, dvar_count] = pieceInfo(u);
-        auto constraints = m_operations[idx]->evalConstraint(param, k, target);
+        auto constraints = m_operations[idx]->evalConstraint(param, k, target,
+                soft_convertible, soft_convertible_weight);
 
         this->addConstraints(constraints, first_dvar_index, dvar_count);
     }
 
-    void addHyperplaneConstraintForPiece(std::size_t idx, const Hyperplane& hp) {
+    void addHyperplaneConstraintForPiece(std::size_t idx, const Hyperplane& hp,
+                                         bool soft_convertible = false,
+                                         T soft_convertible_weight = T(1)) {
         Index first_dvar_index = 
                 (idx == 0 ? 0 : m_cumulativeDecisionVars[idx-1]);
         Index dvar_count = m_operations[idx]->numDecisionVariables();
 
-        auto constraints = m_operations[idx]->hyperplaneConstraintAll(hp);
+        auto constraints = m_operations[idx]->hyperplaneConstraintAll(hp,
+                                  soft_convertible, soft_convertible_weight);
 
         this->addConstraints(constraints, first_dvar_index, dvar_count);
     }
 
-    void addHyperplaneConstraintAll(const Hyperplane& hp) {
+    void addHyperplaneConstraintAll(const Hyperplane& hp,
+                                    bool soft_convertible = false,
+                                    T soft_convertible_weight = T(1)) {
         for(std::size_t i = 0; i < this->numPieces(); i++) {
-            this->addHyperplaneConstraintForPiece(i, hp);
+            this->addHyperplaneConstraintForPiece(i, hp,
+                                  soft_convertible, soft_convertible_weight);
         }
     }
 
-    void addHyperplaneConstraintAt(T u, const Hyperplane& hp) {
+    void addHyperplaneConstraintAt(T u, const Hyperplane& hp,
+                                   bool soft_convertible = false,
+                                   T soft_convertible_weight = T(1)) {
         auto [idx, param, first_dvar_index, dvar_count] = pieceInfo(u);
-        auto constraints = m_operations[idx]->hyperplaneConstraintAt(param, hp);
+        auto constraints = m_operations[idx]->hyperplaneConstraintAt(param, hp,
+                                 soft_convertible, soft_convertible_weight);
         this->addConstraints(constraints, first_dvar_index, dvar_count);
     }
 
@@ -227,7 +240,9 @@ public:
 
     // adds continueity constraint between piece idx and piece idx + 1
     // in their kth derivatives
-    void addContinuityConstraint(std::size_t idx, unsigned int k) {
+    void addContinuityConstraint(std::size_t idx, unsigned int k,
+                                 bool soft_convertible = false,
+                                 T soft_convertible_weight = T(1)) {
         Index first_piece_numdvars = m_operations[idx]->numDecisionVariables();
         Index second_piece_numdvars = 
                 m_operations[idx+1]->numDecisionVariables();
@@ -250,7 +265,7 @@ public:
             coeff.block(0, second_piece_dvars_start, 1, second_piece_numdvars)
                                 = -coeff2;
 
-            m_problem.add_constraint(coeff, 0, 0);
+            m_problem.add_constraint(coeff, 0, 0, soft_convertible, soft_convertible_weight);
         }
     }
 
@@ -378,7 +393,7 @@ private:
         };
     }
 
-    void addConstraints(const std::vector<std::tuple<Row, T, T>>& cons, 
+    void addConstraints(const std::vector<Constraint>& cons,
                         Index first_dvar_index, Index dvar_count) {
 
         Row coeff(this->numDecisionVariables());
@@ -386,10 +401,12 @@ private:
         for(const auto& constraint: cons) {
             coeff.setZero();
             coeff.block(0, first_dvar_index, 1, dvar_count) 
-                        = std::get<0>(constraint);
+                        = constraint.coeff;
             m_problem.add_constraint(coeff, 
-                                     std::get<1>(constraint), 
-                                     std::get<2>(constraint)
+                                     constraint.lb,
+                                     constraint.ub,
+                                     constraint.soft_convertible,
+                                     constraint.soft_weight
             );   
         }
     }

@@ -25,6 +25,27 @@ using Index = Eigen::Index;
 template<typename T, unsigned int DIM>
 using AlignedBox = Eigen::AlignedBox<T, DIM>;
 
+template<typename T>
+struct Constraint {
+    using _Row = Row<T>;
+
+    Constraint(const _Row& c, T l, T u, bool sc = false, T sw = T(1)):
+        coeff(c), lb(l), ub(u), soft_convertible(sc), soft_weight(sw) {
+
+    }
+
+    Constraint(const _Row&& c, T l, T u, bool sc = false, T sw = T(1)):
+        coeff(std::move(c)), lb(l), ub(u), soft_convertible(sc), soft_weight(sw) {
+
+    }
+
+    _Row coeff;
+    T lb;
+    T ub;
+    bool soft_convertible;
+    T soft_weight;
+};
+
 }
 
 #endif
