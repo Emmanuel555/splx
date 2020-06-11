@@ -143,8 +143,6 @@ TEST_CASE("initialization of Bezier curves", "[bezier]") {
 TEST_CASE("splx::internal::bezier::bernsteinCoefficientMatrix test") {
     double double_eq_epsilon = 1e-15;
 
-    splx::BezierQPGenerator<double, 3> generator(8, 0.35914595895879409);
-
     auto bern = splx::internal::bezier::bernsteinCoefficientMatrix(7, 0.35914595895879409, 1);
     Eigen::Matrix<double, 8, 8> mtr;
     mtr << -19.490682897543422,19.490682897543422,0,0,0,0,0,0,

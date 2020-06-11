@@ -5,18 +5,21 @@ project(splx)
 set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(third_party/qp_wrappers)
-add_subdirectory(third_party/abseil-cpp)
+
+if(NOT TARGET absl::strings)
+    add_subdirectory(third_party/abseil-cpp)
+endif()
 
 add_library(splx INTERFACE)
 target_link_libraries(
-splx 
-INTERFACE
-qp_wrappers_problem
-absl::strings
+    splx
+    INTERFACE
+    qp_wrappers_problem
+    absl::strings
 )
 target_include_directories(
-  splx INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+    splx INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
  )
 
 include(test/Tests.cmake)
