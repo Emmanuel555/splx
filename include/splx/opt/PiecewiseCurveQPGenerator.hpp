@@ -352,13 +352,13 @@ private:
         for(std::size_t i = idx; i < this->numPieces(); i++) {
             if(i == 0) {
                 m_cumulativeMaxParameters[i] = m_operations[i]->maxParameter();
-                m_cumulativeDecisionVars[i] = 
+                m_cumulativeDecisionVars[i] =
                     m_operations[i]->numDecisionVariables();
             } else {
-                m_cumulativeMaxParameters[i] = 
-                      m_operations[i]->maxParameter() 
+                m_cumulativeMaxParameters[i] =
+                      m_operations[i]->maxParameter()
                     + m_cumulativeMaxParameters[i-1];
-                m_cumulativeDecisionVars[i] = 
+                m_cumulativeDecisionVars[i] =
                       m_operations[i]->numDecisionVariables()
                     + m_cumulativeDecisionVars[i-1];
             }
@@ -372,8 +372,8 @@ private:
     */
     std::tuple<std::size_t, T, Index, Index> pieceInfo(T param) const {
         std::size_t idx = std::lower_bound(
-                    m_cumulativeMaxParameters.begin(), 
-                    m_cumulativeMaxParameters.end(), 
+                    m_cumulativeMaxParameters.begin(),
+                    m_cumulativeMaxParameters.end(),
                     param) - m_cumulativeMaxParameters.begin();
 
         Index first_dvar_index = 0;
