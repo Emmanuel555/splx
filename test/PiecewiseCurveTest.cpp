@@ -7,6 +7,7 @@
 
 TEST_CASE("", "[PiecewiseCurve]") {
 
+    using namespace std;
     using VectorDIM = Eigen::Matrix<double, 3, 1>;
 
     double double_eq_epsilon = 1e-13;
@@ -22,6 +23,12 @@ TEST_CASE("", "[PiecewiseCurve]") {
         piecewiseCurve.addPiece(piece1);
         piecewiseCurve.addPiece(piece2);
     }
+
+    cout << piecewiseCurve.numPieces() << endl;   
+    cout << piecewiseCurve.operator[](0).maxParameter() << endl;
+    cout << piecewiseCurve.operator[](0).eval(1,0) << endl; 
+    cout << piecewiseCurve.operator[](0).eval(3.5,2) << endl; 
+    // evaluate the kth derivative at piecewise curve at parameter u (T u, unsigned int k) 
 
 
     REQUIRE(piecewiseCurve.numPieces() == 2);
