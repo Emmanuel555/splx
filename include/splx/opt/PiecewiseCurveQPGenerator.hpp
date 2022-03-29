@@ -32,8 +32,8 @@ public:
 
     PiecewiseCurveQPGenerator() : m_problem(0) {}
 
-    void addPiece(std::shared_ptr<_QPOperations> opt_ptr) {
-        m_operations.push_back(opt_ptr);
+    void addPiece(std::shared_ptr<_QPOperations> opt_ptr) { //QPoperations
+        m_operations.push_back(opt_ptr); // private member m_operations that is of vector type, thats why pushiing back operations pointer
         
         if(m_cumulativeMaxParameters.empty()) {
             m_cumulativeMaxParameters.push_back(opt_ptr->maxParameter());
@@ -43,12 +43,15 @@ public:
             );
         }
 
+        // max_param and numDecisionVariables are both included inside opt_ptr...
+        // why is the bottom code the same as the above?
+        // need to run a test case for this shit..
+
         if(m_cumulativeDecisionVars.empty()) {
             m_cumulativeDecisionVars.push_back(opt_ptr->numDecisionVariables());
         } else {
             m_cumulativeDecisionVars.push_back(
-                m_cumulativeDecisionVars.back() 
-                + opt_ptr->numDecisionVariables()
+                m_cumulativeDecisionVars.back() + opt_ptr->numDecisionVariables()
             );
         }
 
@@ -80,7 +83,7 @@ public:
         m_problem = QPWrappers::Problem<T>(0);
     }
 
-    void addBezier(Index ncpts, T a) {
+    void addBezier(Index ncpts, T a) { // this was added in dyn_simulation solely.
         auto bezptr = std::make_shared<_BezierQPOperations>(ncpts, a);
         auto optptr = std::static_pointer_cast<_QPOperations>(bezptr);
         this->addPiece(optptr);
