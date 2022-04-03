@@ -23,8 +23,10 @@ public:
     using Constraint = splx::Constraint<T>;
 
 
-    QPOperations(Index dvar_count, T a) : m_ndecisionvars(dvar_count), m_a(a) {
+    QPOperations(Index dvar_count, T a) : m_ndecisionvars(dvar_count), m_a(a) { // (24,0), cos each ctrl pt accounts for 3 DIM
+    //appends to the private member's value, decision variables are the number of ctrl points designated for each bezier pc
         this->maxParameterCheck(a);
+    
     }
 
     virtual ~QPOperations() {
@@ -113,7 +115,7 @@ public:
     virtual Vector getDVarsForSegment(
             const VectorDIM& from, const VectorDIM& to) const = 0;
 
-    Index numDecisionVariables() const { return m_ndecisionvars; }
+    Index numDecisionVariables() const { return m_ndecisionvars; } // where m_ndecisionvars = 24
     void numDecisionVariables(Index ndvar) { m_ndecisionvars = ndvar; }
 
     T maxParameter() const { return m_a; }

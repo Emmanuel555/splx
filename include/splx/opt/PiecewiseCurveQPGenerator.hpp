@@ -35,6 +35,7 @@ public:
     void addPiece(std::shared_ptr<_QPOperations> opt_ptr) { //QPoperations
         m_operations.push_back(opt_ptr); // private member m_operations that is of vector type, thats why pushiing back operations pointer
         
+        //Max_Param
         if(m_cumulativeMaxParameters.empty()) {
             m_cumulativeMaxParameters.push_back(opt_ptr->maxParameter());
         } else {
@@ -43,10 +44,12 @@ public:
             );
         }
 
+        // cummulative max params is filled using qpoperators...
         // max_param and numDecisionVariables are both included inside opt_ptr...
-        // why is the bottom code the same as the above?
         // need to run a test case for this shit..
 
+
+        //DecisionVar
         if(m_cumulativeDecisionVars.empty()) {
             m_cumulativeDecisionVars.push_back(opt_ptr->numDecisionVariables());
         } else {
@@ -55,7 +58,7 @@ public:
             );
         }
 
-        m_problem = QPWrappers::Problem<T>(this->numDecisionVariables());
+        m_problem = QPWrappers::Problem<T>(this->numDecisionVariables()); // referenced from qpoperators and appended to arg variable, stopped here...
     }
 
     void setPiece(std::size_t idx, std::shared_ptr<_QPOperations> opt_ptr) {
@@ -73,7 +76,7 @@ public:
                 m_cumulativeMaxParameters.begin() + idx
         );
         this->fixCumulativeStructures(idx);
-        m_problem = QPWrappers::Problem<T>(this->numDecisionVariables());
+        m_problem = QPWrappers::Problem<T>(this->numDecisionVariables()); 
     }
 
     void removeAllPieces() {
@@ -85,7 +88,7 @@ public:
 
     void addBezier(Index ncpts, T a) { // this was added in dyn_simulation solely.
         auto bezptr = std::make_shared<_BezierQPOperations>(ncpts, a);
-        auto optptr = std::static_pointer_cast<_QPOperations>(bezptr);
+        auto optptr = std::static_pointer_cast<_QPOperations>(bezptr); // returns a copy of the bezptr which is of type QPOperations..
         this->addPiece(optptr);
     }
 
@@ -96,7 +99,7 @@ public:
     }
 
     std::size_t numPieces() const {
-        return m_cumulativeDecisionVars.size();
+        return m_cumulativeDecisionVars.size(); // 4 pieces of 8 ctrl pts each that are each of DIM D, every piece that is added, push back the number of ctrl_pts into decvar vector   
     }
 
     std::vector<T> pieceMaxParameters() const {
@@ -141,23 +144,23 @@ public:
     }
 
     Index numDecisionVariables() const {
-        if(m_cumulativeDecisionVars.empty()) return 0;
+        if(m_cumulativeDecisionVars.empty()) return 0; 
 
-        return m_cumulativeDecisionVars.back();
-    }
+        return m_cumulativeDecisionVars.back(); // 24 cos its jus ctrl_pts * DIM, its back = 24, not size = 4
+    } 
     
-    void addIntegratedSquaredDerivativeCost(unsigned int k, T lambda) {
-        Matrix Q(this->numDecisionVariables(), this->numDecisionVariables());
-        Vector c(this->numDecisionVariables());
+    void addIntegratedSquaredDerivativeCost(unsigned int k, T lambda) { // m_operations is of type QPoperations again ..
+        Matrix Q(this->numDecisionVariables(), this->numDecisionVariables()); // 24
+        Vector c(this->numDecisionVariables()); // 24
         Q.setZero();
         c.setZero();
 
-        for(std::size_t i = 0; i < this->numPieces(); i++) {
+        for(std::size_t i = 0; i < this->numPieces(); i++) { // 4
             Index dvar_start_idx = (i == 0 ? 0 : m_cumulativeDecisionVars[i-1]);
             Index dvar_count = m_operations[i]->numDecisionVariables();
 
             auto [Qs, cs]
-                = m_operations[i]->integratedSquaredDerivativeCost(k, lambda);
+                = m_operations[i]->integrantedSquaredDerivativeCost(k, lambda);
             
             Q.block(dvar_start_idx, dvar_start_idx, dvar_count, dvar_count) = Qs;
             c.block(dvar_start_idx, 0, dvar_count, 1) = cs;

@@ -24,8 +24,8 @@ public:
     using _Bezier = Bezier<T, DIM>;
     using Constraint = splx::Constraint<T>;
 
-    BezierQPOperations(Index ncpts, T a) 
-        : _Base(ncpts * DIM, a), m_ncpts(ncpts) {
+    BezierQPOperations(Index ncpts, T a) // (8,0) = (ncpts,a)
+        : _Base(ncpts * DIM, a), m_ncpts(ncpts) { // (24,0)
 
     }
 
