@@ -160,7 +160,7 @@ public:
             Index dvar_count = m_operations[i]->numDecisionVariables();
 
             auto [Qs, cs]
-                = m_operations[i]->integrantedSquaredDerivativeCost(k, lambda);
+                = m_operations[i]->integratedSquaredDerivativeCost(k, lambda);
             
             Q.block(dvar_start_idx, dvar_start_idx, dvar_count, dvar_count) = Qs;
             c.block(dvar_start_idx, 0, dvar_count, 1) = cs;
