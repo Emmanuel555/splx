@@ -193,7 +193,7 @@ public:
         auto constraints = m_operations[idx]->evalConstraint(param, k, target,
                 soft_convertible, soft_convertible_weight);
 
-        this->addConstraints(constraints, first_dvar_index, dvar_count);
+        this->addConstraints(constraints, first_dvar_index, dvar_count); // this ptr -> only for functions within class
     }
 
     void addHyperplaneConstraintForPiece(std::size_t idx, const Hyperplane& hp,
@@ -242,7 +242,7 @@ public:
         }
     }
 
-    // adds continueity constraint between piece idx and piece idx + 1
+    // adds continuity constraint between piece idx and piece idx + 1
     // in their kth derivatives
     void addContinuityConstraint(std::size_t idx, unsigned int k,
                                  bool soft_convertible = false,

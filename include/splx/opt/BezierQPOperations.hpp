@@ -160,13 +160,14 @@ public:
         return constraints;
     }
 
+    // hyperplane constraint used for r2r..
     std::vector<Constraint> hyperplaneConstraintAll(
                     const Hyperplane& hp,
                     bool soft_convertible = false,
                     T soft_convertible_weight = T(1)) const override {
 
         std::vector<Constraint> constraints;
-        for(Index i = 0; i < this->numControlPoints(); i++) {
+        for(Index i = 0; i < this->numControlPoints(); i++) { // 8
             Row coeff(_Base::numDecisionVariables());
             coeff.setZero();
             for(Index j = 0; j < DIM; j++) {
