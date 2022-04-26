@@ -170,7 +170,7 @@ public:
         m_problem.add_c(c);
     }
 
-    void addEvalCost(T u, unsigned int k, const VectorDIM& target, T lambda) {
+    void addEvalCost(T u, unsigned int k, const VectorDIM& target, T lambda) { // deviation from segment
         Matrix Q(this->numDecisionVariables(), this->numDecisionVariables());
         Vector c(this->numDecisionVariables());
         Q.setZero();
